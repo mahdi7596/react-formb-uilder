@@ -1,0 +1,6 @@
+{
+  "code": "repeater_not_supported",
+  "source": "compiler",
+  "target": "json-schema-2020-12",
+  "message": "Repeaters are outside MVP."
+}

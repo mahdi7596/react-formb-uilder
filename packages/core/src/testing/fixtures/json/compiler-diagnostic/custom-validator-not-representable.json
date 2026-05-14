@@ -1,0 +1,6 @@
+{
+  "code": "custom_validator_not_representable",
+  "source": "compiler",
+  "target": "json-schema-2020-12",
+  "message": "Custom validator requires backend parity."
+}

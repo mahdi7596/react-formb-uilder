@@ -1,0 +1,12 @@
+{
+  "formId": "form_choices",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:choices",
+  "schemaVersion": "1.0.0",
+  "submissionAttemptId": "attempt_004",
+  "submittedAt": "2026-05-14T00:00:00.000Z",
+  "locale": "en",
+  "data": { "reason": "support" },
+  "files": [],
+  "meta": {}
+}

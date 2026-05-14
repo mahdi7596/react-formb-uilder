@@ -1,0 +1,6 @@
+{
+  "code": "unknown_field_type",
+  "source": "compiler",
+  "target": "json-schema-2020-12",
+  "message": "Unknown field type cannot be compiled."
+}

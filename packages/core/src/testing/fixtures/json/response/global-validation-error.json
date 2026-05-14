@@ -1,0 +1,6 @@
+{
+  "ok": false,
+  "status": "validation_error",
+  "submissionId": null,
+  "errors": [{ "path": null, "code": "form_closed", "message": "This form is closed.", "source": "server" }]
+}

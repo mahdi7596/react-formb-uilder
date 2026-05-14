@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0.0",
+  "formId": "form_upload_orchestration",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:upload",
+  "status": "draft",
+  "locale": "en",
+  "direction": "ltr",
+  "title": "Upload Orchestration",
+  "settings": { "submitMode": "final", "navigation": "singlePage", "validationTiming": "onSubmit", "preserveHiddenValues": false },
+  "nodes": [
+    { "id": "field_upload", "type": "field", "fieldType": "fileUpload", "name": "attachment", "props": { "uploadLifecycle": "direct" } }
+  ]
+}

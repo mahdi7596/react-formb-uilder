@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "formId": "form_condition",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:condition",
+  "status": "draft",
+  "locale": "en",
+  "direction": "ltr",
+  "title": "Condition",
+  "settings": {
+    "submitMode": "final",
+    "navigation": "singlePage",
+    "validationTiming": "onSubmit",
+    "preserveHiddenValues": false
+  },
+  "nodes": [
+    { "id": "field_has_company", "type": "field", "fieldType": "checkbox", "name": "hasCompany", "label": "Company?" },
+    {
+      "id": "field_company",
+      "type": "field",
+      "fieldType": "text",
+      "name": "company.name",
+      "label": "Company name",
+      "visibility": { "field": "hasCompany", "op": "eq", "value": true }
+    }
+  ]
+}

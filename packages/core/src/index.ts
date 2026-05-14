@@ -1,5 +1,9 @@
-export const packageBoundary = {
-  name: "@your-org/forms-core",
-  responsibility: "framework-agnostic contracts and runtime behavior",
-  phase: "bootstrap-placeholder"
-} as const;
+export * from "./conditions/index.js";
+export * from "./diagnostics/index.js";
+export * from "./extensions/index.js";
+export * from "./paths/index.js";
+export * from "./responses/index.js";
+export * from "./schema/index.js";
+export * from "./submissions/index.js";
+export * from "./testing/fixtures/index.js";
+export * from "./validation/index.js";

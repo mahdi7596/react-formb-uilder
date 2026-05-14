@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0.0",
+  "formId": "form_invalid_path",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:invalidpath",
+  "status": "draft",
+  "locale": "en",
+  "direction": "ltr",
+  "title": "Invalid Path",
+  "settings": { "submitMode": "final", "navigation": "singlePage", "validationTiming": "onSubmit", "preserveHiddenValues": false },
+  "nodes": [
+    { "id": "field_bad", "type": "field", "fieldType": "text", "name": "bad path" }
+  ]
+}

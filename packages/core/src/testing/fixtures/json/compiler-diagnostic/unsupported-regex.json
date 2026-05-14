@@ -1,0 +1,6 @@
+{
+  "code": "unsupported_regex",
+  "source": "compiler",
+  "target": "json-schema-2020-12",
+  "message": "Regex syntax is unsupported by the target."
+}

@@ -1,0 +1,14 @@
+{
+  "formId": "form_file_metadata",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:filemeta",
+  "schemaVersion": "1.0.0",
+  "submissionAttemptId": "attempt_007",
+  "submittedAt": "2026-05-14T00:00:00.000Z",
+  "locale": "en",
+  "data": { "attachment": "file_001" },
+  "files": [
+    { "field": "attachment", "fileId": "file_001", "name": "invoice.pdf", "mimeType": "application/pdf", "size": 3200 }
+  ],
+  "meta": {}
+}

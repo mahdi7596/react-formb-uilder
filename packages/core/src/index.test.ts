@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { packageBoundary } from "./index.js";
+import { DIAGNOSTIC_CODES, isSubmittedPath } from "./index.js";
 
-describe("@your-org/forms-core bootstrap placeholder", () => {
-  it("documents the framework-agnostic package boundary", () => {
-    expect(packageBoundary.name).toBe("@your-org/forms-core");
-    expect(packageBoundary.phase).toBe("bootstrap-placeholder");
+describe("@your-org/forms-core contract exports", () => {
+  it("exports framework-neutral path and diagnostic contracts", () => {
+    expect(isSubmittedPath("contact.email")).toBe(true);
+    expect(isSubmittedPath("bad path")).toBe(false);
+    expect(DIAGNOSTIC_CODES.dangerousKey).toBe("dangerous_key");
   });
 });

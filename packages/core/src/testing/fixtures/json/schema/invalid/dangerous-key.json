@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0.0",
+  "formId": "form_dangerous_key",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:dangerous",
+  "status": "draft",
+  "locale": "en",
+  "direction": "ltr",
+  "title": "Dangerous",
+  "settings": { "submitMode": "final", "navigation": "singlePage", "validationTiming": "onSubmit", "preserveHiddenValues": false },
+  "nodes": [
+    { "id": "field_email", "type": "field", "fieldType": "email", "name": "email", "meta": { "__proto__": { "polluted": true } } }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "code": "invalid_submitted_path",
+  "source": "compiler",
+  "target": "json-schema-2020-12",
+  "message": "Submitted path grammar rejected the path."
+}

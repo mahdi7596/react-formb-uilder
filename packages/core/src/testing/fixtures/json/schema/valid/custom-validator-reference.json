@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0.0",
+  "formId": "form_custom_validator",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:customvalidator",
+  "status": "draft",
+  "locale": "en",
+  "direction": "ltr",
+  "title": "Custom Validator",
+  "settings": {
+    "submitMode": "final",
+    "navigation": "singlePage",
+    "validationTiming": "onSubmit",
+    "preserveHiddenValues": false
+  },
+  "nodes": [
+    {
+      "id": "field_email",
+      "type": "field",
+      "fieldType": "email",
+      "name": "email",
+      "label": "Work email",
+      "validation": [{ "type": "custom:businessEmail", "version": "1.0.0" }]
+    }
+  ],
+  "meta": {
+    "registeredValidators": ["custom:businessEmail"]
+  }
+}

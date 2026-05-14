@@ -1,0 +1,7 @@
+{
+  "ok": false,
+  "status": "auth_error",
+  "submissionId": null,
+  "errors": [],
+  "message": "Unauthorized."
+}

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0.0",
+  "formId": "form_unsupported_custom_validator",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:unsupportedcustom",
+  "status": "draft",
+  "locale": "en",
+  "direction": "ltr",
+  "title": "Unsupported Custom Validator",
+  "settings": { "submitMode": "final", "navigation": "singlePage", "validationTiming": "onSubmit", "preserveHiddenValues": false },
+  "nodes": [
+    { "id": "field_email", "type": "field", "fieldType": "email", "name": "email", "validation": [{ "type": "custom:businessEmail", "version": "1.0.0" }] }
+  ]
+}

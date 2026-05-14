@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0.0",
+  "formId": "form_hidden",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:hidden",
+  "status": "draft",
+  "locale": "en",
+  "direction": "ltr",
+  "title": "Hidden",
+  "settings": {
+    "submitMode": "final",
+    "navigation": "singlePage",
+    "validationTiming": "onSubmit",
+    "preserveHiddenValues": false
+  },
+  "nodes": [
+    { "id": "field_email", "type": "field", "fieldType": "email", "name": "email", "label": "Email" },
+    { "id": "hidden_source", "type": "hidden", "fieldType": "hidden", "name": "utm.source", "defaultValue": "newsletter" }
+  ]
+}

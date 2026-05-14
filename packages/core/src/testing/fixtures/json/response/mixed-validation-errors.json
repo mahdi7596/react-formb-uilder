@@ -1,0 +1,9 @@
+{
+  "ok": false,
+  "status": "validation_error",
+  "submissionId": null,
+  "errors": [
+    { "path": "email", "code": "invalid_email", "message": "Enter a valid email.", "source": "server" },
+    { "path": null, "code": "form_closed", "message": "This form is closed.", "source": "server" }
+  ]
+}

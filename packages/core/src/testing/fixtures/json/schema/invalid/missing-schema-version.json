@@ -1,0 +1,16 @@
+{
+  "formId": "form_missing_schema_version",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:missing",
+  "status": "draft",
+  "locale": "en",
+  "direction": "ltr",
+  "title": "Missing Schema Version",
+  "settings": {
+    "submitMode": "final",
+    "navigation": "singlePage",
+    "validationTiming": "onSubmit",
+    "preserveHiddenValues": false
+  },
+  "nodes": []
+}

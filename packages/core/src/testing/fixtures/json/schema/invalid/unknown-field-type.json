@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0.0",
+  "formId": "form_unknown_field",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:unknownfield",
+  "status": "draft",
+  "locale": "en",
+  "direction": "ltr",
+  "title": "Unknown Field",
+  "settings": { "submitMode": "final", "navigation": "singlePage", "validationTiming": "onSubmit", "preserveHiddenValues": false },
+  "nodes": [
+    { "id": "field_custom", "type": "field", "fieldType": "custom:unknown", "name": "custom" }
+  ]
+}

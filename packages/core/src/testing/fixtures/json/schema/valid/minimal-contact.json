@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0",
+  "formId": "form_contact",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:rev001",
+  "status": "draft",
+  "locale": "en",
+  "direction": "ltr",
+  "title": "Contact",
+  "settings": {
+    "submitMode": "final",
+    "navigation": "singlePage",
+    "validationTiming": "onSubmit",
+    "preserveHiddenValues": false
+  },
+  "nodes": [
+    {
+      "id": "field_email",
+      "type": "field",
+      "fieldType": "email",
+      "name": "email",
+      "label": "Email",
+      "validation": [{ "type": "required" }, { "type": "email" }]
+    }
+  ]
+}

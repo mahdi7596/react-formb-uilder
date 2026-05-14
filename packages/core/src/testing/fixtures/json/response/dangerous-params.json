@@ -1,0 +1,8 @@
+{
+  "ok": false,
+  "status": "validation_error",
+  "submissionId": null,
+  "errors": [
+    { "path": "email", "code": "invalid_email", "message": "Enter a valid email.", "source": "server", "params": { "prototype": { "polluted": true } } }
+  ]
+}

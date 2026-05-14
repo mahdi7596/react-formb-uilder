@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "formId": "form_localized",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:localized",
+  "status": "draft",
+  "locale": "en",
+  "direction": "ltr",
+  "title": "Contact",
+  "settings": {
+    "submitMode": "final",
+    "navigation": "singlePage",
+    "validationTiming": "onSubmit",
+    "preserveHiddenValues": false
+  },
+  "nodes": [
+    { "id": "field_email", "type": "field", "fieldType": "email", "name": "email", "label": "Email" }
+  ],
+  "localizations": {
+    "fa": {
+      "title": "تماس",
+      "nodes": {
+        "field_email": { "label": "ایمیل" }
+      }
+    }
+  }
+}

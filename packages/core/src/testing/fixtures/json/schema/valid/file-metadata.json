@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0.0",
+  "formId": "form_file_metadata",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:filemeta",
+  "status": "draft",
+  "locale": "en",
+  "direction": "ltr",
+  "title": "File Metadata",
+  "settings": {
+    "submitMode": "final",
+    "navigation": "singlePage",
+    "validationTiming": "onSubmit",
+    "preserveHiddenValues": false
+  },
+  "nodes": [
+    { "id": "field_attachment", "type": "field", "fieldType": "fileMetadata", "name": "attachment", "label": "Attachment metadata" }
+  ]
+}

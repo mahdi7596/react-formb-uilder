@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0.0",
+  "formId": "form_steps",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:steps",
+  "status": "draft",
+  "locale": "en",
+  "direction": "ltr",
+  "title": "Intake",
+  "settings": {
+    "submitMode": "final",
+    "navigation": "steps",
+    "validationTiming": "onSubmit",
+    "preserveHiddenValues": false
+  },
+  "nodes": [
+    { "id": "step_contact", "type": "step", "label": "Contact", "children": ["field_email"] },
+    { "id": "field_email", "type": "field", "fieldType": "email", "name": "email", "label": "Email" },
+    { "id": "step_profile", "type": "step", "label": "Profile", "children": ["field_name"] },
+    { "id": "field_name", "type": "field", "fieldType": "text", "name": "profile.name", "label": "Name" }
+  ]
+}

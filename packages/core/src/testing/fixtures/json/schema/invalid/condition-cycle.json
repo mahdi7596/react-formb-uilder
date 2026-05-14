@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0.0",
+  "formId": "form_condition_cycle",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:cycle",
+  "status": "draft",
+  "locale": "en",
+  "direction": "ltr",
+  "title": "Condition Cycle",
+  "settings": { "submitMode": "final", "navigation": "singlePage", "validationTiming": "onSubmit", "preserveHiddenValues": false },
+  "nodes": [
+    { "id": "field_a", "type": "field", "fieldType": "text", "name": "a", "visibility": { "field": "b", "op": "notEmpty" } },
+    { "id": "field_b", "type": "field", "fieldType": "text", "name": "b", "visibility": { "field": "a", "op": "notEmpty" } }
+  ]
+}

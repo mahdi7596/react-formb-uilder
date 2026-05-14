@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0.0",
+  "formId": "form_unknown_node",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:unknownnode",
+  "status": "draft",
+  "locale": "en",
+  "direction": "ltr",
+  "title": "Unknown Node",
+  "settings": { "submitMode": "final", "navigation": "singlePage", "validationTiming": "onSubmit", "preserveHiddenValues": false },
+  "nodes": [
+    { "id": "node_unknown", "type": "widget", "name": "widget" }
+  ]
+}

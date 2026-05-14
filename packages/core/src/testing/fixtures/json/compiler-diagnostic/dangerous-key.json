@@ -1,0 +1,6 @@
+{
+  "code": "dangerous_key",
+  "source": "compiler",
+  "target": "json-schema-2020-12",
+  "message": "Dangerous keys must be rejected."
+}

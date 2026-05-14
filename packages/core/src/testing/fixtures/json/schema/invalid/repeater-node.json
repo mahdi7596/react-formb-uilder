@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0.0",
+  "formId": "form_repeater",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:repeater",
+  "status": "draft",
+  "locale": "en",
+  "direction": "ltr",
+  "title": "Repeater",
+  "settings": { "submitMode": "final", "navigation": "singlePage", "validationTiming": "onSubmit", "preserveHiddenValues": false },
+  "nodes": [
+    { "id": "repeater_items", "type": "repeater", "children": [] }
+  ]
+}

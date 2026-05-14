@@ -1,0 +1,6 @@
+{
+  "code": "upload_lifecycle_not_supported",
+  "source": "compiler",
+  "target": "json-schema-2020-12",
+  "message": "Upload lifecycle is outside core contracts."
+}

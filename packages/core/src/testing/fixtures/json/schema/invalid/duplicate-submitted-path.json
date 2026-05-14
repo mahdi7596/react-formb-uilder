@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0.0",
+  "formId": "form_duplicate_paths",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:duplicatepaths",
+  "status": "draft",
+  "locale": "en",
+  "direction": "ltr",
+  "title": "Duplicate Paths",
+  "settings": { "submitMode": "final", "navigation": "singlePage", "validationTiming": "onSubmit", "preserveHiddenValues": false },
+  "nodes": [
+    { "id": "field_email_1", "type": "field", "fieldType": "email", "name": "email" },
+    { "id": "field_email_2", "type": "field", "fieldType": "text", "name": "email" }
+  ]
+}

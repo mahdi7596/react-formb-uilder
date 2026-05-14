@@ -1,0 +1,12 @@
+{
+  "formId": "form_hidden",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:hidden",
+  "schemaVersion": "1.0.0",
+  "submissionAttemptId": "attempt_006",
+  "submittedAt": "2026-05-14T00:00:00.000Z",
+  "locale": "en",
+  "data": { "email": "reader@example.com", "utm.source": "newsletter" },
+  "files": [],
+  "meta": { "preserveHiddenValues": true }
+}

@@ -1,0 +1,6 @@
+{
+  "code": "condition_not_representable",
+  "source": "compiler",
+  "target": "json-schema-2020-12",
+  "message": "Condition uses behavior that cannot be represented."
+}

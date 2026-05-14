@@ -1,0 +1,11 @@
+{
+  "formId": "form_contact",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:rev001",
+  "schemaVersion": "1.0.0",
+  "submittedAt": "2026-05-14T00:00:00.000Z",
+  "locale": "en",
+  "data": { "email": "reader@example.com" },
+  "files": [],
+  "meta": {}
+}
