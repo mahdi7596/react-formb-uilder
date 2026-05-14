@@ -1,4 +1,8 @@
 import type { ConditionExpression } from "../conditions/index.js";
+import { extractConditionDependencies } from "../conditions/index.js";
+import { createDiagnostic, DIAGNOSTIC_CODES, type Diagnostic, type DiagnosticCode } from "../diagnostics/index.js";
+import { isSubmittedPath } from "../paths/index.js";
+import { findDangerousKeys, hasExecutableCode } from "../safety/index.js";
 import type { ValidationRule } from "../validation/index.js";
 
 export type SchemaVersion = "1.0.0";
@@ -94,4 +98,231 @@ export interface CanonicalFormSchema {
   nodes: FormNode[];
   localizations?: Record<string, LocalizationContract>;
   meta?: JsonObject;
+}
+
+export interface SchemaAnalysisResult {
+  diagnostics: Diagnostic[];
+  nodesById: Map<string, FormNode>;
+  fieldsByPath: Map<string, FieldNode | HiddenNode>;
+}
+
+const BUILT_IN_NODE_TYPES = new Set(["field", "hidden", "section", "step", "content", "ending"]);
+const BUILT_IN_FIELD_TYPES = new Set([
+  "text",
+  "textarea",
+  "number",
+  "email",
+  "phone",
+  "url",
+  "radio",
+  "checkboxGroup",
+  "select",
+  "checkbox",
+  "switch",
+  "date",
+  "time",
+  "rating",
+  "linearScale",
+  "fileMetadata"
+]);
+const BUILT_IN_RULES = new Set([
+  "required",
+  "minLength",
+  "maxLength",
+  "minWords",
+  "maxWords",
+  "min",
+  "max",
+  "integer",
+  "step",
+  "pattern",
+  "email",
+  "url",
+  "option",
+  "selectionCount",
+  "accepted"
+]);
+
+export function analyzeSchema(schema: unknown): SchemaAnalysisResult {
+  const diagnostics: Diagnostic[] = [];
+  const nodesById = new Map<string, FormNode>();
+  const fieldsByPath = new Map<string, FieldNode | HiddenNode>();
+
+  addDangerDiagnostics(schema, diagnostics);
+  if (hasExecutableCode(schema)) {
+    addDiagnostic(diagnostics, DIAGNOSTIC_CODES.executableCodeProhibited);
+  }
+
+  if (!isRecord(schema)) {
+    addDiagnostic(diagnostics, DIAGNOSTIC_CODES.invalidSubmissionEnvelope);
+    return { diagnostics, nodesById, fieldsByPath };
+  }
+
+  if (typeof schema.schemaVersion !== "string") {
+    addDiagnostic(diagnostics, DIAGNOSTIC_CODES.invalidSubmissionEnvelope);
+  }
+
+  const nodes = Array.isArray(schema.nodes) ? schema.nodes.filter(isRecord) : [];
+  const schemaRegisteredValidators = readRegisteredValidators(schema);
+
+  for (const rawNode of nodes) {
+    const node = rawNode as unknown as FormNode;
+    if (typeof rawNode.id === "string") {
+      if (nodesById.has(rawNode.id)) {
+        addDiagnostic(diagnostics, DIAGNOSTIC_CODES.duplicateNodeId, rawNode.id);
+      }
+      nodesById.set(rawNode.id, node);
+    }
+
+    if (rawNode.type === "repeater") {
+      addDiagnostic(diagnostics, DIAGNOSTIC_CODES.repeaterNotSupported);
+    } else if (typeof rawNode.type !== "string" || !BUILT_IN_NODE_TYPES.has(rawNode.type)) {
+      addDiagnostic(diagnostics, DIAGNOSTIC_CODES.unknownNodeType);
+    }
+
+    if (rawNode.type === "field" || rawNode.type === "hidden") {
+      collectFieldDiagnostics(rawNode, fieldsByPath, diagnostics, schemaRegisteredValidators);
+    }
+  }
+
+  collectConditionDiagnostics(nodes, fieldsByPath, diagnostics);
+  return { diagnostics: dedupeDiagnostics(diagnostics), nodesById, fieldsByPath };
+}
+
+function collectFieldDiagnostics(
+  node: Record<string, unknown>,
+  fieldsByPath: Map<string, FieldNode | HiddenNode>,
+  diagnostics: Diagnostic[],
+  schemaRegisteredValidators: Set<string>
+): void {
+  if (typeof node.name !== "string" || !isSubmittedPath(node.name)) {
+    addDiagnostic(diagnostics, DIAGNOSTIC_CODES.invalidSubmittedPath);
+  } else {
+    if (fieldsByPath.has(node.name)) {
+      addDiagnostic(diagnostics, DIAGNOSTIC_CODES.duplicateSubmittedPath, node.name);
+    }
+    fieldsByPath.set(node.name, node as unknown as FieldNode | HiddenNode);
+  }
+
+  if (node.type === "field") {
+    if (node.fieldType === "fileUpload" || hasUploadLifecycle(node)) {
+      addDiagnostic(diagnostics, DIAGNOSTIC_CODES.uploadLifecycleNotSupported);
+    } else if (typeof node.fieldType !== "string" || !BUILT_IN_FIELD_TYPES.has(node.fieldType)) {
+      addDiagnostic(diagnostics, DIAGNOSTIC_CODES.unknownFieldType);
+    }
+
+    const validation = Array.isArray(node.validation) ? node.validation.filter(isRecord) : [];
+    for (const rule of validation) {
+      if (typeof rule.type !== "string") {
+        addDiagnostic(diagnostics, DIAGNOSTIC_CODES.unknownValidationRule);
+      } else if (!BUILT_IN_RULES.has(rule.type) && !rule.type.startsWith("custom:")) {
+        addDiagnostic(diagnostics, DIAGNOSTIC_CODES.unknownValidationRule);
+      } else if (rule.type.startsWith("custom:")) {
+        const registered = readRegisteredValidators(node).has(rule.type) || schemaRegisteredValidators.has(rule.type);
+        if (!registered) {
+          addDiagnostic(diagnostics, DIAGNOSTIC_CODES.unsupportedCustomRegistration);
+        }
+      }
+    }
+  }
+}
+
+function collectConditionDiagnostics(
+  nodes: Record<string, unknown>[],
+  fieldsByPath: Map<string, FieldNode | HiddenNode>,
+  diagnostics: Diagnostic[]
+): void {
+  const dependencyByNode = new Map<string, string[]>();
+  const nodeNameById = new Map<string, string>();
+  const nodeIdByName = new Map<string, string>();
+
+  for (const node of nodes) {
+    if (typeof node.id === "string" && typeof node.name === "string") {
+      nodeNameById.set(node.id, node.name);
+      nodeIdByName.set(node.name, node.id);
+    }
+  }
+
+  for (const node of nodes) {
+    if (typeof node.id !== "string") {
+      continue;
+    }
+
+    const dependencies = [
+      ...readConditionDependencies(node.visibility),
+      ...readConditionDependencies(node.enabledWhen),
+      ...readValidationConditionDependencies(node)
+    ];
+    dependencyByNode.set(node.id, dependencies);
+
+    for (const dependency of dependencies) {
+      if (!fieldsByPath.has(dependency)) {
+        addDiagnostic(diagnostics, DIAGNOSTIC_CODES.invalidCondition, dependency);
+      }
+    }
+  }
+
+  for (const [nodeId, dependencies] of dependencyByNode) {
+    for (const dependency of dependencies) {
+      const dependencyNodeId = nodeIdByName.get(dependency);
+      if (!dependencyNodeId) {
+        continue;
+      }
+      const reciprocal = dependencyByNode.get(dependencyNodeId) ?? [];
+      const ownName = nodeNameById.get(nodeId);
+      if (ownName && reciprocal.includes(ownName)) {
+        addDiagnostic(diagnostics, DIAGNOSTIC_CODES.conditionCycle, nodeId);
+      }
+    }
+  }
+}
+
+function readConditionDependencies(value: unknown): string[] {
+  return isCondition(value) ? extractConditionDependencies(value) : [];
+}
+
+function readValidationConditionDependencies(node: Record<string, unknown>): string[] {
+  const validation = Array.isArray(node.validation) ? node.validation.filter(isRecord) : [];
+  return validation.flatMap((rule) => readConditionDependencies(rule.when));
+}
+
+function isCondition(value: unknown): value is ConditionExpression {
+  return isRecord(value);
+}
+
+function readRegisteredValidators(node: Record<string, unknown>): Set<string> {
+  const meta = isRecord(node.meta) ? node.meta : {};
+  const validators = Array.isArray(meta.registeredValidators) ? meta.registeredValidators : [];
+  return new Set(validators.filter((value): value is string => typeof value === "string"));
+}
+
+function hasUploadLifecycle(node: Record<string, unknown>): boolean {
+  const props = isRecord(node.props) ? node.props : {};
+  return "uploadLifecycle" in props || "prepareUpload" in props || "finalizeUpload" in props;
+}
+
+function addDangerDiagnostics(value: unknown, diagnostics: Diagnostic[]): void {
+  for (const finding of findDangerousKeys(value)) {
+    addDiagnostic(diagnostics, DIAGNOSTIC_CODES.dangerousKey, finding.path);
+  }
+}
+
+function addDiagnostic(diagnostics: Diagnostic[], code: DiagnosticCode, path?: string): void {
+  diagnostics.push(createDiagnostic({ code, path: path ?? null }));
+}
+
+function dedupeDiagnostics(diagnostics: Diagnostic[]): Diagnostic[] {
+  const seen = new Set<string>();
+  return diagnostics.filter((diagnostic) => {
+    const key = `${diagnostic.code}:${diagnostic.path ?? ""}`;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }

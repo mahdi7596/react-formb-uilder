@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 
 import { createDiagnostic, DIAGNOSTIC_CODES, type Diagnostic, type DiagnosticCode } from "../../diagnostics/index.js";
 import { hasDangerousKey, isSubmittedPath } from "../../paths/index.js";
+import { parseBackendResponse } from "../../responses/index.js";
+import { analyzeSchema } from "../../schema/index.js";
 import { fixtureManifest } from "./manifest.js";
 import type { FixtureCategory, FixtureContractResult, FixtureExpectation, FixtureManifest, FixtureManifestEntry, LoadedFixtureEntry } from "./types.js";
 
@@ -58,7 +60,7 @@ export function checkFixtureContract(entry: LoadedFixtureEntry): Diagnostic[] {
   }
 
   if (entry.manifestEntry.category === "schema") {
-    collectSchemaDiagnostics(entry.data, codes);
+    collectRuntimeDiagnostics(analyzeSchema(entry.data).diagnostics, codes);
   }
 
   if (entry.manifestEntry.category === "submission") {
@@ -66,7 +68,7 @@ export function checkFixtureContract(entry: LoadedFixtureEntry): Diagnostic[] {
   }
 
   if (entry.manifestEntry.category === "response") {
-    collectResponseDiagnostics(entry.data, codes);
+    collectRuntimeDiagnostics(parseBackendResponse(entry.data).diagnostics, codes);
   }
 
   if (entry.manifestEntry.category === "compiler-diagnostic") {
@@ -87,6 +89,12 @@ export function checkAllFixtureContracts(): FixtureContractResult[] {
     fixtureId: entry.manifestEntry.id,
     diagnostics: checkFixtureContract(entry)
   }));
+}
+
+function collectRuntimeDiagnostics(diagnostics: Diagnostic[], codes: Set<DiagnosticCode>): void {
+  for (const diagnostic of diagnostics) {
+    codes.add(diagnostic.code);
+  }
 }
 
 function collectSchemaDiagnostics(value: unknown, codes: Set<DiagnosticCode>): void {
@@ -228,6 +236,9 @@ function collectSubmissionDiagnostics(value: unknown, codes: Set<DiagnosticCode>
 
   const data = isRecord(value.data) ? value.data : {};
   for (const key of Object.keys(data)) {
+    if (["__proto__", "constructor", "prototype"].includes(key)) {
+      continue;
+    }
     if (!isSubmittedPath(key, "runtime-error")) {
       codes.add(DIAGNOSTIC_CODES.invalidSubmittedPath);
     }
