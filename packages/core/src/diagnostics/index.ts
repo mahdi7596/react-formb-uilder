@@ -1,6 +1,8 @@
 export const DIAGNOSTIC_CODES = {
   conditionCycle: "condition_cycle",
   conditionNotRepresentable: "condition_not_representable",
+  customFieldSchemaMissing: "custom_field_schema_missing",
+  customPredicateNotRepresentable: "custom_predicate_not_representable",
   customValidatorNotRepresentable: "custom_validator_not_representable",
   dangerousKey: "dangerous_key",
   duplicateNodeId: "duplicate_node_id",
@@ -17,6 +19,7 @@ export const DIAGNOSTIC_CODES = {
   invalidUrl: "invalid_url",
   missingRequiredField: "missing_required_field",
   repeaterNotSupported: "repeater_not_supported",
+  requiredHiddenValue: "required_hidden_value",
   revisionHashMismatch: "revision_hash_mismatch",
   unknownFieldType: "unknown_field_type",
   unknownNodeType: "unknown_node_type",

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0.0",
+  "formId": "form_choices",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:choices",
+  "status": "published",
+  "locale": "en",
+  "direction": "ltr",
+  "title": "Choices",
+  "settings": {
+    "submitMode": "final",
+    "navigation": "singlePage",
+    "validationTiming": "onSubmit",
+    "preserveHiddenValues": false
+  },
+  "nodes": [
+    {
+      "id": "reason",
+      "type": "field",
+      "fieldType": "select",
+      "name": "reason",
+      "options": [
+        { "id": "support", "label": "Support", "value": "support" },
+        { "id": "sales", "label": "Sales", "value": "sales" }
+      ],
+      "validation": [{ "type": "required" }]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0.0",
+  "formId": "form_minimal",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:minimal",
+  "status": "published",
+  "locale": "en",
+  "direction": "ltr",
+  "title": "Minimal",
+  "settings": {
+    "submitMode": "final",
+    "navigation": "singlePage",
+    "validationTiming": "onSubmit",
+    "preserveHiddenValues": false
+  },
+  "nodes": [
+    {
+      "id": "email",
+      "type": "field",
+      "fieldType": "email",
+      "name": "email"
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "formId": "form_unsupported",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:unsupported",
+  "status": "published",
+  "locale": "en",
+  "direction": "ltr",
+  "title": "Unsupported",
+  "settings": {
+    "submitMode": "final",
+    "navigation": "singlePage",
+    "validationTiming": "onSubmit",
+    "preserveHiddenValues": false
+  },
+  "nodes": [
+    {
+      "id": "company",
+      "type": "field",
+      "fieldType": "text",
+      "name": "company",
+      "visibility": { "field": "hasCompany", "op": "eq", "value": true },
+      "validation": [
+        { "type": "custom:businessEmail", "version": "1.0.0" },
+        { "type": "pattern", "params": { "pattern": "(?<=a)b" } }
+      ]
+    },
+    {
+      "id": "unknown",
+      "type": "field",
+      "fieldType": "mystery",
+      "name": "mystery"
+    },
+    {
+      "id": "repeat",
+      "type": "repeater",
+      "children": []
+    }
+  ]
+}

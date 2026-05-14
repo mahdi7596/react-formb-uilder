@@ -1,5 +1,2 @@
-export const packageBoundary = {
-  name: "@your-org/forms-validators",
-  responsibility: "optional validators, compiler diagnostics, and generated validation artifacts",
-  phase: "bootstrap-placeholder"
-} as const;
+export * from "./compiler/index.js";
+export * from "./json-schema/index.js";

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0.0",
+  "formId": "form_nested",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:nested",
+  "status": "published",
+  "locale": "en",
+  "direction": "ltr",
+  "title": "Nested",
+  "settings": {
+    "submitMode": "final",
+    "navigation": "singlePage",
+    "validationTiming": "onSubmit",
+    "preserveHiddenValues": false
+  },
+  "nodes": [
+    {
+      "id": "email",
+      "type": "field",
+      "fieldType": "email",
+      "name": "user.email"
+    }
+  ]
+}

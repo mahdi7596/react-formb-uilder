@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0.0",
+  "formId": "form_file",
+  "revisionId": "rev_001",
+  "revisionHash": "sha256:file",
+  "status": "published",
+  "locale": "en",
+  "direction": "ltr",
+  "title": "File",
+  "settings": {
+    "submitMode": "final",
+    "navigation": "singlePage",
+    "validationTiming": "onSubmit",
+    "preserveHiddenValues": false
+  },
+  "nodes": [
+    {
+      "id": "attachment",
+      "type": "field",
+      "fieldType": "fileMetadata",
+      "name": "attachment"
+    }
+  ]
+}
