@@ -1,0 +1,12 @@
+dist
+coverage
+node_modules
+pnpm-lock.yaml
+playwright-report
+test-results
+.codex
+DESIGN.md
+docs/architecture
+docs/research
+docs/superpowers
+form-builder-page-simulation.html

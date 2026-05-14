@@ -1,0 +1,850 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>شبیه‌سازی صفحه فرم‌ساز</title>
+  <style>
+    :root {
+      --primary: #315cff;
+      --on-primary: #ffffff;
+      --primary-container: #e8edff;
+      --on-primary-container: #12205c;
+      --accent: #087568;
+      --surface: #ffffff;
+      --surface-muted: #f6f7fb;
+      --surface-subtle: #fbfcff;
+      --surface-inverse: #151923;
+      --text: #172033;
+      --muted: #667085;
+      --border: #dde3ee;
+      --border-strong: #aeb8c8;
+      --danger: #b42318;
+      --warning: #9a6500;
+      --success: #147a4d;
+      --focus: #315cff;
+      --shadow-1: 0 1px 2px rgba(15, 23, 42, 0.08);
+      --shadow-2: 0 12px 32px rgba(15, 23, 42, 0.14);
+      --radius: 8px;
+      --radius-sm: 4px;
+      --font: Vazirmatn, "Noto Sans Arabic", Tahoma, system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background: var(--surface-muted);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.45;
+      letter-spacing: 0;
+      direction: rtl;
+      text-align: start;
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: 56px 1fr;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: auto minmax(360px, 1fr) 280px;
+      align-items: center;
+      gap: 16px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      grid-column: 1;
+    }
+
+    .logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      background: var(--surface-inverse);
+      color: #fff;
+      font-weight: 800;
+    }
+
+    .title-block { min-width: 0; }
+    .title {
+      margin: 0;
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 16px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .command-center {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-width: 0;
+      grid-column: 2;
+    }
+
+    .tabs, .segmented {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface-muted);
+    }
+
+    .tab, .segment {
+      border: 0;
+      background: transparent;
+      min-height: 32px;
+      padding: 0 11px;
+      border-radius: 6px;
+      color: var(--muted);
+      font-weight: 650;
+      cursor: default;
+    }
+
+    .tab[aria-selected="true"], .segment.is-active {
+      color: var(--primary);
+      background: var(--surface);
+      box-shadow: var(--shadow-1);
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+      grid-column: 3;
+    }
+
+    .icon-btn, .btn {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      height: 36px;
+      border-radius: var(--radius);
+      font-weight: 650;
+    }
+
+    .icon-btn {
+      width: 36px;
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+    }
+
+    .btn {
+      padding: 0 14px;
+    }
+
+    .btn.primary {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: var(--on-primary);
+    }
+
+    .workspace {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 340px minmax(460px, 1fr) 280px;
+    }
+
+    .panel {
+      min-height: 0;
+      background: var(--surface);
+      border-inline-end: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .palette {
+      grid-column: 1;
+    }
+
+    .canvas-shell {
+      grid-column: 2;
+    }
+
+    .inspector {
+      grid-column: 3;
+      border-inline-end: 0;
+      border-inline-start: 1px solid var(--border);
+    }
+
+    .panel-header {
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-title {
+      margin: 0 0 10px;
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 750;
+    }
+
+    .search {
+      width: 100%;
+      height: 38px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0 10px;
+      background: var(--surface-muted);
+      color: var(--text);
+    }
+
+    .panel-scroll {
+      overflow: auto;
+      padding: 12px;
+    }
+
+    .category {
+      margin-bottom: 16px;
+    }
+
+    .category-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0 4px 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+      text-transform: uppercase;
+    }
+
+    .palette-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .palette-item {
+      min-height: 72px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      box-shadow: none;
+    }
+
+    .palette-item .glyph {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
+      background: var(--primary-container);
+      color: var(--primary);
+      font-weight: 800;
+    }
+
+    .palette-item strong {
+      font-size: 13px;
+      line-height: 16px;
+    }
+
+    .later {
+      opacity: 0.54;
+      background: var(--surface-muted);
+    }
+
+    .canvas-shell {
+      min-width: 0;
+      min-height: 0;
+      overflow: auto;
+      background:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px),
+        var(--surface-muted);
+      background-size: 28px 28px;
+      background-position: -1px -1px;
+    }
+
+    .canvas-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      height: 48px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(246, 247, 251, 0.9);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 18px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    .canvas-wrap {
+      width: min(760px, calc(100% - 48px));
+      margin: 32px auto 56px;
+    }
+
+    .form-page {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--shadow-1);
+      overflow: hidden;
+    }
+
+    .form-hero {
+      padding: 28px 32px 22px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 24px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      color: var(--on-primary-container);
+      background: var(--primary-container);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    h1 {
+      margin: 14px 0 8px;
+      font-size: 28px;
+      line-height: 36px;
+      letter-spacing: 0;
+    }
+
+    .hero-copy {
+      margin: 0;
+      color: var(--muted);
+      max-width: 60ch;
+    }
+
+    .form-body {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .drop-zone {
+      min-height: 44px;
+      border: 1px dashed rgba(49, 92, 255, 0.45);
+      background: var(--primary-container);
+      color: var(--on-primary-container);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .field-node {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      padding: 14px;
+      position: relative;
+    }
+
+    .field-node.selected {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(49, 92, 255, 0.14), var(--shadow-1);
+    }
+
+    .node-tools {
+      position: absolute;
+      inset-block-start: -18px;
+      inset-inline-end: 12px;
+      display: inline-flex;
+      gap: 4px;
+      padding: 3px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow-1);
+    }
+
+    .tool {
+      width: 26px;
+      height: 26px;
+      border: 0;
+      background: transparent;
+      border-radius: 6px;
+      color: var(--muted);
+    }
+
+    .field-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    label, .field-label {
+      display: block;
+      font-weight: 750;
+      font-size: 14px;
+      line-height: 20px;
+    }
+
+    .field-badge {
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .field-input, .fake-textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      min-height: 38px;
+      padding: 8px 10px;
+      color: var(--muted);
+      background: var(--surface-muted);
+    }
+
+    .fake-textarea { min-height: 82px; }
+
+    .choice-row {
+      display: grid;
+      grid-template-columns: 18px 1fr;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0;
+      color: var(--muted);
+    }
+
+    .ltr {
+      direction: ltr;
+      text-align: left;
+      unicode-bidi: isolate;
+    }
+
+    .radio {
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid var(--border-strong);
+      border-radius: 50%;
+      background: var(--surface);
+    }
+
+    .page-footer {
+      padding: 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--muted);
+    }
+
+    .inspector-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .inspector-tabs .tab {
+      border-radius: 0;
+      min-height: 42px;
+    }
+
+    .inspect-section {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .inspect-section h2 {
+      margin: 0 0 12px;
+      font-size: 14px;
+      line-height: 20px;
+    }
+
+    .row {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .row span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 38px;
+    }
+
+    .toggle-row > div:first-child {
+      min-width: 0;
+    }
+
+    .switch {
+      width: 38px;
+      height: 22px;
+      border-radius: 999px;
+      background: var(--primary);
+      padding: 3px;
+      flex: 0 0 auto;
+    }
+
+    .switch::after {
+      content: "";
+      display: block;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      margin-inline-start: auto;
+    }
+
+    .diagnostic {
+      border: 1px solid #f2d18b;
+      background: #fff8e7;
+      color: #6b4600;
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      font-size: 13px;
+    }
+
+    .colors {
+      display: grid;
+      gap: 10px;
+    }
+
+    .color-option {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+    }
+
+    .swatches {
+      display: flex;
+      gap: 4px;
+    }
+
+    .swatch {
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .color-option strong {
+      display: block;
+      font-size: 13px;
+      line-height: 18px;
+    }
+
+    .color-option small {
+      color: var(--muted);
+    }
+
+    @media (max-width: 1080px) {
+      .workspace { grid-template-columns: 248px minmax(420px, 1fr); }
+      .inspector { display: none; }
+      .palette { grid-column: 1; }
+      .canvas-shell { grid-column: 2; }
+      .topbar { grid-template-columns: auto minmax(260px, 1fr) 248px; }
+    }
+
+    @media (max-width: 760px) {
+      .topbar {
+        grid-template-columns: 1fr auto;
+        height: auto;
+        min-height: 56px;
+        padding-block: 10px;
+      }
+
+      .command-center { display: none; }
+      .brand { grid-column: 1; }
+      .actions { grid-column: 2; }
+      .workspace { grid-template-columns: 1fr; }
+      .panel { display: none; }
+      .canvas-wrap { width: calc(100% - 24px); margin-top: 16px; }
+      .form-hero { padding: 22px 20px 18px; }
+      h1 { font-size: 24px; line-height: 32px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">ف</div>
+        <div class="title-block">
+          <p class="title">فرم دریافت اطلاعات مشتری</p>
+          <div class="meta">پیش‌نویس ذخیره شد · <bdi class="ltr">rev_draft_004</bdi> · فارسی RTL</div>
+        </div>
+      </div>
+
+      <nav class="command-center" aria-label="نماهای فرم‌ساز">
+        <div class="tabs" role="tablist">
+          <button class="tab" aria-selected="true">ساخت</button>
+          <button class="tab">منطق</button>
+          <button class="tab">ظاهر</button>
+          <button class="tab">انتشار</button>
+          <button class="tab">نتایج</button>
+        </div>
+      </nav>
+
+      <div class="actions">
+        <button class="btn primary">انتشار</button>
+        <button class="btn">پیش‌نمایش</button>
+        <button class="icon-btn" aria-label="واگرد">↷</button>
+        <button class="icon-btn" aria-label="بازانجام">↶</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="panel palette" aria-label="پالت اجزای فرم">
+        <div class="panel-header">
+          <p class="panel-title">اجزای فرم</p>
+          <input class="search" aria-label="جستجوی اجزا" value="جستجوی فیلد، چیدمان، منطق">
+        </div>
+        <div class="panel-scroll">
+          <section class="category">
+            <div class="category-head"><span>ورودی</span><span>۸</span></div>
+            <div class="palette-grid">
+              <div class="palette-item"><span class="glyph">T</span><strong>متن کوتاه</strong></div>
+              <div class="palette-item"><span class="glyph">¶</span><strong>متن بلند</strong></div>
+              <div class="palette-item"><span class="glyph">@</span><strong>ایمیل</strong></div>
+              <div class="palette-item"><span class="glyph">#</span><strong>عدد</strong></div>
+            </div>
+          </section>
+
+          <section class="category">
+            <div class="category-head"><span>گزینه‌ها</span><span>۵</span></div>
+            <div class="palette-grid">
+              <div class="palette-item"><span class="glyph">○</span><strong>تک‌گزینه‌ای</strong></div>
+              <div class="palette-item"><span class="glyph">☑</span><strong>چندگزینه‌ای</strong></div>
+              <div class="palette-item"><span class="glyph">⌄</span><strong>فهرست کشویی</strong></div>
+              <div class="palette-item"><span class="glyph">✓</span><strong>رضایت‌نامه</strong></div>
+            </div>
+          </section>
+
+          <section class="category">
+            <div class="category-head"><span>چیدمان</span><span>۴</span></div>
+            <div class="palette-grid">
+              <div class="palette-item"><span class="glyph">H</span><strong>عنوان</strong></div>
+              <div class="palette-item"><span class="glyph">—</span><strong>جداکننده</strong></div>
+              <div class="palette-item"><span class="glyph">§</span><strong>بخش</strong></div>
+              <div class="palette-item"><span class="glyph">1</span><strong>مرحله</strong></div>
+            </div>
+          </section>
+
+          <section class="category">
+            <div class="category-head"><span>پیشرفته</span><span>بعدا</span></div>
+            <div class="palette-grid">
+              <div class="palette-item later"><span class="glyph">ƒ</span><strong>محاسبه</strong></div>
+              <div class="palette-item later"><span class="glyph">↻</span><strong>تکرارشونده</strong></div>
+            </div>
+          </section>
+        </div>
+      </aside>
+
+      <section class="canvas-shell" aria-label="بوم فرم">
+        <div class="canvas-toolbar">
+          <div class="status"><span class="dot"></span> schema برای ذخیره پیش‌نویس معتبر است</div>
+          <div class="segmented" aria-label="اندازه پیش‌نمایش">
+            <button class="segment is-active">دسکتاپ</button>
+            <button class="segment">موبایل</button>
+          </div>
+        </div>
+
+        <div class="canvas-wrap">
+          <article class="form-page">
+            <header class="form-hero">
+              <span class="eyebrow">مرحله ۱ از ۳ · هویت مشتری</span>
+              <h1>اطلاعات اولیه مشتری را وارد کنید</h1>
+              <p class="hero-copy">این بوم، کروم ویرایشگر را دور همان فیلدهایی نشان می‌دهد که بعدا در رندرر عمومی استفاده می‌شوند.</p>
+            </header>
+
+            <div class="form-body">
+              <div class="drop-zone">فیلد را اینجا رها کنید یا برای افزودن کلید / را بزنید</div>
+
+              <section class="field-node selected" aria-label="فیلد نام کامل انتخاب شده">
+                <div class="node-tools" aria-label="اقدام‌های سریع فیلد">
+                  <button class="tool" aria-label="کشیدن فیلد">⋮⋮</button>
+                  <button class="tool" aria-label="تکثیر فیلد">⧉</button>
+                  <button class="tool" aria-label="حذف فیلد">⌫</button>
+                </div>
+                <div class="field-top">
+                  <label for="full-name">نام کامل</label>
+                  <span class="field-badge">الزامی · <bdi class="ltr">fullName</bdi></span>
+                </div>
+                <input id="full-name" class="field-input" value="سارا احمدی">
+              </section>
+
+              <section class="field-node">
+                <div class="field-top">
+                  <label for="email">نشانی ایمیل</label>
+                  <span class="field-badge"><bdi class="ltr">email</bdi></span>
+                </div>
+                <input id="email" class="field-input ltr" value="sara@example.com">
+              </section>
+
+              <section class="field-node">
+                <div class="field-top">
+                  <span class="field-label">روش تماس ترجیحی</span>
+                  <span class="field-badge">تک‌گزینه‌ای</span>
+                </div>
+                <div class="choice-row"><span class="radio"></span><span>ایمیل</span></div>
+                <div class="choice-row"><span class="radio"></span><span>تماس تلفنی</span></div>
+                <div class="choice-row"><span class="radio"></span><span>پیام‌رسان</span></div>
+              </section>
+
+              <section class="field-node">
+                <div class="field-top">
+                  <label for="notes">یادداشت زمینه‌ای</label>
+                  <span class="field-badge">اختیاری</span>
+                </div>
+                <div id="notes" class="fake-textarea">زمینه درخواست، هدف مشتری یا نکته‌های ارجاع را اینجا بنویسید.</div>
+              </section>
+            </div>
+
+            <footer class="page-footer">
+              <span>مقادیر پنهان از ارسال نهایی حذف می‌شوند</span>
+              <button class="btn primary">مرحله بعد</button>
+            </footer>
+          </article>
+        </div>
+      </section>
+
+      <aside class="panel inspector" aria-label="بازرس تنظیمات">
+        <div class="panel-header">
+          <p class="panel-title">نام کامل</p>
+          <div class="meta">فیلد · متن · <bdi class="ltr">node_full_name</bdi></div>
+        </div>
+        <div class="inspector-tabs" role="tablist">
+          <button class="tab" aria-selected="true">محتوا</button>
+          <button class="tab">قواعد</button>
+          <button class="tab">منطق</button>
+          <button class="tab">داده</button>
+        </div>
+
+        <div class="panel-scroll">
+          <section class="inspect-section">
+            <h2>محتوای فیلد</h2>
+            <label class="row">
+              <span>برچسب</span>
+              <input class="search" value="نام کامل">
+            </label>
+            <label class="row">
+              <span>متن راهنما</span>
+              <input class="search" value="در صورت امکان از نام رسمی استفاده کنید">
+            </label>
+            <div class="toggle-row">
+              <div>
+                <strong>الزامی</strong>
+                <div class="meta">پیش از رفتن به مرحله بعد اعتبارسنجی شود</div>
+              </div>
+              <div class="switch" aria-label="الزامی فعال است"></div>
+            </div>
+          </section>
+
+          <section class="inspect-section">
+            <h2>قرارداد ارسال</h2>
+            <label class="row">
+              <span>مسیر داده ارسالی</span>
+              <input class="search ltr" value="fullName">
+            </label>
+            <div class="diagnostic">تغییر این مسیر پس از انتشار هشدار revision ایجاد می‌کند، چون ارسال‌های backend به آن وابسته‌اند.</div>
+          </section>
+
+          <section class="inspect-section">
+            <h2>جهت‌های رنگ اصلی</h2>
+            <div class="colors">
+              <div class="color-option">
+                <div class="swatches"><span class="swatch" style="background:#315cff"></span><span class="swatch" style="background:#087568"></span></div>
+                <div><strong>A. Electric Trust</strong><small>پیش‌فرض فعلی این شبیه‌سازی</small></div>
+              </div>
+              <div class="color-option">
+                <div class="swatches"><span class="swatch" style="background:#263238"></span><span class="swatch" style="background:#00a884"></span></div>
+                <div><strong>B. Graphite Mint</strong><small>خنثی‌تر و سازمانی‌تر</small></div>
+              </div>
+              <div class="color-option">
+                <div class="swatches"><span class="swatch" style="background:#6d3ef2"></span><span class="swatch" style="background:#e25555"></span></div>
+                <div><strong>C. Signal Violet</strong><small>بیانگرتر و خلاق‌تر</small></div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </aside>
+    </main>
+  </div>
+</body>
+</html>

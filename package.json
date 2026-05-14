@@ -1,0 +1,26 @@
+{
+  "name": "react-form-builder-workspace",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Package-first backend-agnostic React form builder workspace.",
+  "type": "module",
+  "packageManager": "pnpm@10.11.0",
+  "scripts": {
+    "build": "pnpm -r build",
+    "clean": "pnpm -r clean",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "typecheck": "tsc -b"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.27.0",
+    "@types/node": "^22.15.18",
+    "eslint": "^9.27.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.32.1",
+    "vitest": "^3.1.3"
+  }
+}

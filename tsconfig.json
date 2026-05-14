@@ -1,0 +1,12 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/core" },
+    { "path": "./packages/react-renderer" },
+    { "path": "./packages/react-builder" },
+    { "path": "./packages/validators" },
+    { "path": "./packages/adapters" },
+    { "path": "./packages/themes" },
+    { "path": "./examples/vite-react" }
+  ]
+}
