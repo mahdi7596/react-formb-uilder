@@ -28,7 +28,7 @@ Recommended product posture:
 
 ### Source Documents Inspected
 
-- `2026-05-14-react-form-builder-architecture-design.md`
+- `docs/architecture/2026-05-14-react-form-builder-architecture-design.md`
 - `AGENTS.md`
 - `docs/research/2026-05-14-end-user-form-builder-competitor-research.md`
 - `openspec/config.yaml`
@@ -2164,7 +2164,7 @@ Decisions required before implementation:
 
 Local project sources:
 
-- `2026-05-14-react-form-builder-architecture-design.md`
+- `docs/architecture/2026-05-14-react-form-builder-architecture-design.md`
 - `AGENTS.md`
 - `docs/research/2026-05-14-end-user-form-builder-competitor-research.md`
 - `docs/research/complete-form-builder-component-audit-standard-prompt.md`

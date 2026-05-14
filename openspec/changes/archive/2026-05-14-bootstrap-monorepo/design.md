@@ -2,7 +2,7 @@
 
 The project currently contains architecture, research, design guidance, OpenSpec configuration, and a master development plan. It does not yet contain a git repository, root package metadata, package workspaces, TypeScript configuration, test configuration, source package folders, or repeatable verification commands.
 
-Phase 0 must create a foundation for later work while preserving the architecture decisions already recorded in `AGENTS.md`, `2026-05-14-react-form-builder-architecture-design.md`, `docs/architecture/2026-05-14-react-technical-architecture-decisions.md`, and `DESIGN.md`.
+Phase 0 must create a foundation for later work while preserving the architecture decisions already recorded in `AGENTS.md`, `docs/architecture/2026-05-14-react-form-builder-architecture-design.md`, `docs/architecture/2026-05-14-react-technical-architecture-decisions.md`, and `DESIGN.md`.
 
 The owner has created the GitHub repository at `https://github.com/mahdi7596/react-formb-uilder.git`. The URL is reachable and currently behaves like an empty repository, making it suitable for the initial push after local setup.
 

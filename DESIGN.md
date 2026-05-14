@@ -9,7 +9,7 @@ meta:
   sources:
     brand: "provisional"
     accessibilityTarget: "WCAG 2.2 AA"
-    architecture: "2026-05-14-react-form-builder-architecture-design.md"
+    architecture: "docs/architecture/2026-05-14-react-form-builder-architecture-design.md"
 colors:
   primary: "#315CFF"
   on-primary: "#FFFFFF"

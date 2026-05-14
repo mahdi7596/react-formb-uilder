@@ -6,7 +6,7 @@ This project is the beginning of a backend-agnostic React form builder. Every ne
 
 Before responding to a new implementation prompt, inspect:
 
-1. `2026-05-14-react-form-builder-architecture-design.md`
+1. `docs/architecture/2026-05-14-react-form-builder-architecture-design.md`
 2. `AGENTS.md`
 3. Any OpenSpec change files if they are added later under `openspec/`
 

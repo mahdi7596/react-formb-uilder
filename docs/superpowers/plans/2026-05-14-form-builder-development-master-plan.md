@@ -44,7 +44,7 @@ Because the workspace is currently not a git repository, the first execution pha
 Existing files inspected:
 
 - `AGENTS.md`
-- `2026-05-14-react-form-builder-architecture-design.md`
+- `docs/architecture/2026-05-14-react-form-builder-architecture-design.md`
 - `docs/architecture/2026-05-14-react-technical-architecture-decisions.md`
 - `DESIGN.md`
 - `docs/research/2026-05-14-complete-form-builder-component-interaction-specification.md`

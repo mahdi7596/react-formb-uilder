@@ -4,7 +4,7 @@ You are a senior product architect, UX systems designer, frontend architect, and
 
 This work must be based on:
 
-1. `2026-05-14-react-form-builder-architecture-design.md`
+1. `docs/architecture/2026-05-14-react-form-builder-architecture-design.md`
 2. `docs/research/2026-05-14-end-user-form-builder-competitor-research.md`
 3. Fresh web research into leading form builders and survey builders, including but not limited to Typeform, Jotform, Fillout, Tally, Google Forms, SurveyMonkey, Formstack, Airtable Forms, Paperform, Cognito Forms, Wufoo, Formsort, and enterprise/workflow-oriented products where relevant.
 

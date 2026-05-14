@@ -4,7 +4,7 @@ Decision date: 2026-05-14
 
 Status: approved baseline for implementation.
 
-This document records the React-side architecture decisions for the backend-agnostic React form builder. It complements `2026-05-14-react-form-builder-architecture-design.md`, which remains the broader product architecture source of truth.
+This document records the React-side architecture decisions for the backend-agnostic React form builder. It complements `docs/architecture/2026-05-14-react-form-builder-architecture-design.md`, which remains the broader product architecture source of truth.
 
 ## Goals
 
@@ -373,4 +373,3 @@ Future agents should use these skills when relevant:
 - `design-md-creator` later, when creating or upgrading the project design system and `DESIGN.md`.
 - `form-builder-ux-reviewer` for creator UX decisions.
 - `form-builder-ui-reviewer` for visual UI quality decisions.
-
