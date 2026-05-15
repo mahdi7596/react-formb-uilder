@@ -1,4 +1,7 @@
-## ADDED Requirements
+## Purpose
+Define the core package contract modules and JSON-first conformance fixtures that make canonical schema, submission, response, diagnostic, and migration behavior portable across backends and testable without React.
+
+## Requirements
 
 ### Requirement: Core contract type modules
 The core package SHALL expose framework-neutral TypeScript contract modules for the approved Phase 1 schema contracts.
