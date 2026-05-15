@@ -65,3 +65,12 @@ Builder theme selectors are scoped under `.rfb-builder` where generic renderer c
 ## Testing
 
 Builder tests cover commands, editor store behavior, server-state helpers, UI accessibility, palette/canvas interactions, keyboard movement, inspector editing, publish workflow surfaces, theme variables, state selectors, responsive constraints, focus styles, and reduced-motion CSS.
+
+## Read More
+
+- Root onboarding: [../../README.md](../../README.md)
+- Builder integration: [../../docs/integration/react-builder.md](../../docs/integration/react-builder.md)
+- Backend contracts: [../../docs/integration/backend-contracts.md](../../docs/integration/backend-contracts.md)
+- JSON Schema generation: [../../docs/integration/json-schema-generation.md](../../docs/integration/json-schema-generation.md)
+- Revisions and dangerous changes: [../../docs/migrations/revisions-and-dangerous-changes.md](../../docs/migrations/revisions-and-dangerous-changes.md)
+- Theme package: [../themes/README.md](../themes/README.md)

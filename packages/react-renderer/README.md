@@ -21,3 +21,11 @@ Hosts can use `createRendererStyles()`, import theme helpers directly, override 
 ## Testing
 
 Renderer tests cover built-in fields, accessibility, hidden-field semantics, validation, backend response mapping, normalized envelopes, slots, data attributes, theme variables, focus styles, and reduced-motion CSS.
+
+## Read More
+
+- Root onboarding: [../../README.md](../../README.md)
+- Renderer integration: [../../docs/integration/react-renderer.md](../../docs/integration/react-renderer.md)
+- Field accessibility contract: [../../docs/accessibility/field-contract.md](../../docs/accessibility/field-contract.md)
+- Schema and submission safety: [../../docs/security/schema-and-submission-safety.md](../../docs/security/schema-and-submission-safety.md)
+- Backend contracts: [../../docs/integration/backend-contracts.md](../../docs/integration/backend-contracts.md)

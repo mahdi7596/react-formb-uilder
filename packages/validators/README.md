@@ -33,3 +33,11 @@ The React builder can display this bundle in generated artifact and publish chec
 - Do not put JSON Schema generation in `packages/core`.
 - Preserve compiler diagnostic codes and severity so publish checks can classify blocking errors and reviewable warnings.
 - Keep generated artifacts JSON-serializable for backend handoff and documentation.
+
+## Read More
+
+- Root onboarding: [../../README.md](../../README.md)
+- JSON Schema generation: [../../docs/integration/json-schema-generation.md](../../docs/integration/json-schema-generation.md)
+- Backend contracts: [../../docs/integration/backend-contracts.md](../../docs/integration/backend-contracts.md)
+- Backend conformance fixtures: [../../docs/schema/backend-conformance-fixtures-v1.md](../../docs/schema/backend-conformance-fixtures-v1.md)
+- Schema and submission safety: [../../docs/security/schema-and-submission-safety.md](../../docs/security/schema-and-submission-safety.md)

@@ -45,3 +45,11 @@ The default variable selector is `:where(.rfb-theme, .rfb-form, .rfb-builder)`. 
 ## Deferred Work
 
 Dark mode, generated `.css` assets, a theme gallery, and final brand selection are intentionally deferred. The current package prepares stable contracts and class hooks without locking the product into a finished design system.
+
+## Read More
+
+- Root onboarding: [../../README.md](../../README.md)
+- Renderer integration: [../../docs/integration/react-renderer.md](../../docs/integration/react-renderer.md)
+- Builder integration: [../../docs/integration/react-builder.md](../../docs/integration/react-builder.md)
+- Field accessibility contract: [../../docs/accessibility/field-contract.md](../../docs/accessibility/field-contract.md)
+- Project design source: [../../DESIGN.md](../../DESIGN.md)

@@ -51,3 +51,12 @@ Helper functions include:
 - No React Hook Form or TanStack Query public API.
 - No persistence behavior in `packages/core`.
 - No upload lifecycle behavior beyond future extension room.
+
+## Read More
+
+- Root onboarding: [../../README.md](../../README.md)
+- Backend contracts: [../../docs/integration/backend-contracts.md](../../docs/integration/backend-contracts.md)
+- Revisions and dangerous changes: [../../docs/migrations/revisions-and-dangerous-changes.md](../../docs/migrations/revisions-and-dangerous-changes.md)
+- Backend response contract: [../../docs/schema/backend-response-v1.md](../../docs/schema/backend-response-v1.md)
+- Submission envelope: [../../docs/schema/submission-envelope-v1.md](../../docs/schema/submission-envelope-v1.md)
+- Schema and submission safety: [../../docs/security/schema-and-submission-safety.md](../../docs/security/schema-and-submission-safety.md)

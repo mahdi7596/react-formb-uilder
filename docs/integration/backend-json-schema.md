@@ -1,24 +1,20 @@
 # Backend JSON Schema Integration
 
-Phase 4 generated JSON Schema is a backend-friendly artifact, not the canonical authoring model. Backends can use it to validate submitted data shape, while still enforcing revision integrity, auth, rate limits, trusted file metadata, and business rules server-side.
+This is the short-form compatibility page for backend teams looking specifically for generated JSON Schema. The full guide is [JSON Schema generation](json-schema-generation.md).
+
+Generated JSON Schema is a backend-friendly artifact, not the canonical authoring model. Backends can use it to validate submitted data shape while still enforcing revision integrity, auth, rate limits, trusted file metadata, idempotency, and business rules server-side.
 
 ```ts
 import { compileJsonSchema } from "@your-org/forms-validators";
 
 const result = compileJsonSchema(canonicalSchema);
-
-if (result.diagnostics.length > 0) {
-  console.log(result.diagnostics);
-}
-
 const submittedDataSchema = result.schema;
+const diagnostics = result.diagnostics;
 ```
 
-The compiler result includes:
+Read these before integrating:
 
-- `schema`: Draft 2020-12 JSON Schema for submitted `data`.
-- `diagnostics`: warnings and errors for unsupported or unsafe behavior.
-- `validationPlan`: validation behavior that JSON Schema does not fully represent.
-- `conditionDependencies`: submitted paths used by conditions.
-
-Backends should return normalized response fixtures compatible with `docs/schema/backend-response-v1.md`.
+- [JSON Schema generation](json-schema-generation.md)
+- [Backend contracts](backend-contracts.md)
+- [Backend response contract](../schema/backend-response-v1.md)
+- [Backend conformance fixtures](../schema/backend-conformance-fixtures-v1.md)
