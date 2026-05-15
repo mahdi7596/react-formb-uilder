@@ -6,6 +6,7 @@
   "type": "module",
   "packageManager": "pnpm@10.11.0",
   "scripts": {
+    "audit:release": "node scripts/release-candidate-audit.mjs",
     "build": "pnpm -r build",
     "clean": "pnpm -r clean",
     "format": "prettier --write .",

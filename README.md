@@ -53,6 +53,7 @@ Run the main verification commands:
 pnpm test
 pnpm typecheck
 pnpm build
+pnpm audit:release
 ```
 
 Run the example app:
@@ -90,6 +91,7 @@ Start here by role:
 | Backend implementer | [backend contracts](docs/integration/backend-contracts.md), [JSON Schema generation](docs/integration/json-schema-generation.md), [backend conformance fixtures](docs/schema/backend-conformance-fixtures-v1.md), [schema and submission safety](docs/security/schema-and-submission-safety.md) |
 | Accessibility reviewer | [field accessibility contract](docs/accessibility/field-contract.md), [React renderer integration](docs/integration/react-renderer.md), [React builder integration](docs/integration/react-builder.md) |
 | Security reviewer | [schema and submission safety](docs/security/schema-and-submission-safety.md), [submitted paths](docs/schema/submitted-path-grammar-v1.md), [extension registration](docs/schema/extension-registration-v1.md) |
+| Release reviewer | [MVP release candidate notes](docs/release-notes/2026-05-15-mvp-release-candidate.md), [latest Phase 13 report](docs/reports/2026-05-15-phase-13-mvp-release-candidate.md) |
 
 ## Development Workflow
 
