@@ -2,10 +2,18 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "composite": true,
+    "jsx": "react-jsx",
     "outDir": "dist",
     "rootDir": "src",
+    "types": ["vite/client"],
     "tsBuildInfoFile": "tsconfig.tsbuildinfo"
   },
-  "include": ["src/**/*.ts"],
-  "references": [{ "path": "../../packages/core" }]
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "references": [
+    { "path": "../../packages/adapters" },
+    { "path": "../../packages/core" },
+    { "path": "../../packages/react-builder" },
+    { "path": "../../packages/react-renderer" },
+    { "path": "../../packages/validators" }
+  ]
 }

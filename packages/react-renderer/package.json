@@ -19,6 +19,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@your-org/forms-adapters": "workspace:*",
     "@your-org/forms-core": "workspace:*"
   },
   "peerDependencies": {

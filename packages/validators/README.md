@@ -1,15 +1,35 @@
 # @your-org/forms-validators
 
-Phase 0 placeholder package for optional validation artifacts and compiler behavior.
+Optional backend-friendly validation artifacts and compiler behavior.
 
 ## Responsibility
 
-This package will own generated JSON Schema artifacts, compiler diagnostics, optional AJV-related helpers, and optional Zod helpers if they are later approved.
-
-## Boundary
+This package owns generated JSON Schema artifacts, compiler diagnostics, validation-plan output, condition dependency output, and builder review bundles.
 
 Canonical schema authoring and runtime behavior remain in `@your-org/forms-core`. Generated JSON Schema is a backend-friendly artifact, not the authoring source of truth.
 
-## Phase 0 Status
+## JSON Schema Compiler
 
-No validator or compiler behavior is implemented here yet. The current source entrypoint is only a bootstrap placeholder so the monorepo can typecheck, test, and build.
+`compileJsonSchema(schema, options)` returns:
+
+- `schema`: Draft 2020-12 submitted-data JSON Schema
+- `diagnostics`: compiler diagnostics with original codes and severity
+- `validationPlan`: validation behavior that cannot be fully represented in JSON Schema
+- `conditionDependencies`: condition dependency metadata for visibility, enabled state, and conditional validation
+
+## Builder Artifact Bundle
+
+`createBuilderArtifactBundle(schema, options)` returns the compiler output plus publish-review metadata:
+
+- `dialect`: `https://json-schema.org/draft/2020-12/schema`
+- `generatedAt`: a provided timestamp or deterministic marker
+- `fixtureReferences`: conformance fixture references grouped by category
+
+The React builder can display this bundle in generated artifact and publish checklist surfaces. The builder must consume this compiler-owned output rather than reimplementing JSON Schema generation or compiler diagnostics.
+
+## Boundaries
+
+- Do not import React or builder UI code.
+- Do not put JSON Schema generation in `packages/core`.
+- Preserve compiler diagnostic codes and severity so publish checks can classify blocking errors and reviewable warnings.
+- Keep generated artifacts JSON-serializable for backend handoff and documentation.

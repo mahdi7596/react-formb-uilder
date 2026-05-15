@@ -30,6 +30,8 @@ import {
 
 import {
   addNode,
+  buildPublishChecklist,
+  compareDraftToPublished,
   createEditorStore,
   deleteNode,
   duplicateNode,
@@ -41,14 +43,18 @@ import {
   updateSubmittedName,
   updateValidation,
   type BuilderActivePanel,
+  type BuilderArtifactBundle,
   type BuilderCommandDiagnostic,
   type BuilderCommandResult,
   type BuilderEditorState,
   type BuilderEditorStore,
   type BuilderNode,
   type BuilderOption,
+  type BuilderPersistenceState,
   type BuilderSchema,
-  type BuilderValidationRule
+  type BuilderValidationRule,
+  type PublishedRevisionMetadata,
+  type PublishChecklist
 } from "./index.js";
 import {
   CANVAS_ROOT_DROP_ID,
@@ -65,6 +71,15 @@ import {
 export interface BuilderWorkspaceProps {
   schema: BuilderSchema;
   store?: BuilderEditorStore;
+  persistenceState?: BuilderPersistenceState | undefined;
+  publishChecklist?: PublishChecklist | undefined;
+  artifactBundle?: BuilderArtifactBundle | undefined;
+  latestPublishedRevision?: PublishedRevisionMetadata | null | undefined;
+  onSaveDraft?: ((schema: BuilderSchema) => void) | undefined;
+  onRetrySave?: (() => void) | undefined;
+  onReloadLatest?: (() => void) | undefined;
+  onPreserveLocalEdits?: (() => void) | undefined;
+  onPublish?: ((schema: BuilderSchema) => void) | undefined;
   direction?: "rtl" | "ltr";
   locale?: string;
   className?: string;
@@ -94,6 +109,19 @@ export function BuilderWorkspace(props: BuilderWorkspaceProps): ReactNode {
   const selectedNode = state.selectedNodeId ? findNode(state.schema, state.selectedNodeId) : null;
   const diagnostics = state.commandStatus.diagnostics;
   const isPreview = state.canvasMode === "preview";
+  const publishChecklist = useMemo(
+    () => props.publishChecklist ?? buildPublishChecklist({
+      schema: state.schema,
+      artifactBundle: props.artifactBundle,
+      commandDiagnostics: diagnostics,
+      latestPublished: props.latestPublishedRevision
+    }),
+    [diagnostics, props.artifactBundle, props.latestPublishedRevision, props.publishChecklist, state.schema]
+  );
+  const revisionComparison = useMemo(
+    () => compareDraftToPublished(state.schema, props.latestPublishedRevision),
+    [props.latestPublishedRevision, state.schema]
+  );
   const [announcement, setAnnouncement] = useState("Drag and keyboard movement ready.");
   const [activeDrag, setActiveDrag] = useState<BuilderDragPayload | null>(null);
   const [overDropId, setOverDropId] = useState<string | null>(null);
@@ -200,9 +228,22 @@ export function BuilderWorkspace(props: BuilderWorkspaceProps): ReactNode {
         <CommandBar
           state={state}
           diagnostics={diagnostics}
+          persistenceState={props.persistenceState}
+          publishChecklist={publishChecklist}
           onUndo={() => { actions.undo(); announce("Undo complete."); }}
           onRedo={() => { actions.redo(); announce("Redo complete."); }}
           onTogglePreview={() => actions.setCanvasMode(isPreview ? "edit" : "preview")}
+          onSaveDraft={() => { props.onSaveDraft?.(state.schema); announce("Save draft requested."); }}
+          onPublish={() => { props.onPublish?.(state.schema); announce("Publish requested."); }}
+        />
+        <BuilderWorkflowPanels
+          persistenceState={props.persistenceState}
+          publishChecklist={publishChecklist}
+          artifactBundle={props.artifactBundle}
+          revisionComparison={revisionComparison}
+          onRetrySave={props.onRetrySave}
+          onReloadLatest={props.onReloadLatest}
+          onPreserveLocalEdits={props.onPreserveLocalEdits}
         />
         <div className="rfb-builder-layout">
           <Palette
@@ -372,6 +413,18 @@ export function createBuilderStyles(): string {
 .rfb-command-actions{display:flex;align-items:center;gap:8px;min-inline-size:max-content;}
 .rfb-command-diagnostics{display:flex;align-items:center;gap:8px;min-inline-size:0;overflow:auto;}
 .rfb-command-diagnostics span{font-size:12px;line-height:16px;color:var(--fb-warning);white-space:nowrap;}
+.rfb-workflow-panels{background:var(--fb-surface-muted);border-block-end:1px solid var(--fb-border);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:12px 16px;}
+.rfb-workflow-row{display:grid;gap:6px;min-inline-size:0;}
+.rfb-workflow-card{border:1px solid var(--fb-border);border-radius:var(--fb-radius);background:var(--fb-surface);padding:12px;display:grid;gap:10px;min-inline-size:0;}
+.rfb-workflow-card summary{cursor:pointer;font-weight:800;}
+.rfb-workflow-card-header{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.rfb-check-list{display:grid;gap:8px;margin:0;padding:0;list-style:none;}
+.rfb-check-list li{border-inline-start:3px solid var(--fb-info);padding-inline-start:8px;display:grid;gap:2px;min-inline-size:0;}
+.rfb-check-list li[data-severity="error"]{border-color:var(--fb-danger);}
+.rfb-check-list li[data-severity="warning"]{border-color:var(--fb-warning);}
+.rfb-check-list li span{color:var(--fb-muted);font-size:12px;line-height:16px;overflow-wrap:anywhere;}
+.rfb-artifact-grid{display:flex;gap:8px;flex-wrap:wrap;}
+.rfb-artifact-code{max-block-size:180px;overflow:auto;border:1px solid var(--fb-border);border-radius:var(--fb-radius-sm);background:var(--fb-surface-muted);padding:10px;font-size:12px;line-height:18px;}
 .rfb-builder-layout{display:grid;grid-template-columns:280px minmax(320px,1fr) 340px;grid-template-areas:"palette canvas inspector";block-size:calc(100vh - 56px);min-block-size:664px;}
 [dir="rtl"] .rfb-builder-layout{grid-template-areas:"palette canvas inspector";}
 [dir="ltr"] .rfb-builder-layout{grid-template-areas:"inspector canvas palette";}
@@ -435,8 +488,8 @@ export function createBuilderStyles(): string {
 .rfb-inspector-row label,.rfb-label{font-size:14px;line-height:20px;font-weight:700;}
 .rfb-preview-frame{inline-size:min(760px,100%);margin-inline:auto;background:var(--fb-surface);border:1px solid var(--fb-border);border-radius:var(--fb-radius);padding:24px;}
 .rfb-diagnostics{display:grid;gap:8px;}
-@media (max-width: 1024px){.rfb-builder-layout{grid-template-columns:260px minmax(320px,1fr);grid-template-areas:"palette canvas";}.rfb-inspector{position:fixed;inset-block:56px 0;inset-inline-start:0;inline-size:min(360px,88vw);z-index:10;box-shadow:0 12px 32px rgba(15,23,42,.14);}.rfb-builder[data-active-panel="preview"] .rfb-inspector{display:none;}}
-@media (max-width: 720px){.rfb-command-bar{block-size:auto;min-block-size:56px;align-items:flex-start;flex-direction:column;padding-block:12px}.rfb-command-actions{inline-size:100%;overflow:auto}.rfb-builder-layout{display:flex;flex-direction:column;block-size:auto;min-block-size:0}.rfb-palette{border-inline-start:0;border-block-end:1px solid var(--fb-border);max-block-size:260px}.rfb-canvas-region{padding:16px}.rfb-inspector{position:static;inline-size:auto;box-shadow:none;border-inline-end:0;border-block-start:1px solid var(--fb-border)}.rfb-preview-frame{padding:16px}.rfb-builder{min-height:100vh;overflow:auto}}
+@media (max-width: 1024px){.rfb-workflow-panels{grid-template-columns:repeat(2,minmax(0,1fr));}.rfb-builder-layout{grid-template-columns:260px minmax(320px,1fr);grid-template-areas:"palette canvas";}.rfb-inspector{position:fixed;inset-block:56px 0;inset-inline-start:0;inline-size:min(360px,88vw);z-index:10;box-shadow:0 12px 32px rgba(15,23,42,.14);}.rfb-builder[data-active-panel="preview"] .rfb-inspector{display:none;}}
+@media (max-width: 720px){.rfb-command-bar{block-size:auto;min-block-size:56px;align-items:flex-start;flex-direction:column;padding-block:12px}.rfb-command-actions{inline-size:100%;overflow:auto}.rfb-workflow-panels{grid-template-columns:1fr;padding:12px}.rfb-builder-layout{display:flex;flex-direction:column;block-size:auto;min-block-size:0}.rfb-palette{border-inline-start:0;border-block-end:1px solid var(--fb-border);max-block-size:260px}.rfb-canvas-region{padding:16px}.rfb-inspector{position:static;inline-size:auto;box-shadow:none;border-inline-end:0;border-block-start:1px solid var(--fb-border)}.rfb-preview-frame{padding:16px}.rfb-builder{min-height:100vh;overflow:auto}}
 @media (prefers-reduced-motion: no-preference){.rfb-button,.rfb-icon-button,.rfb-palette-item,.rfb-node,.rfb-tab,.rfb-drop-zone,.rfb-drag-handle{transition:border-color .16s ease,box-shadow .16s ease,background-color .16s ease,color .16s ease,opacity .16s ease;}}
 `;
 }
@@ -491,13 +544,18 @@ export function Badge(props: { children: ReactNode; dir?: "ltr" | "rtl" }): Reac
 function CommandBar(props: {
   state: BuilderEditorState;
   diagnostics: BuilderCommandDiagnostic[];
+  persistenceState?: BuilderPersistenceState | undefined;
+  publishChecklist: PublishChecklist;
   onUndo: () => void;
   onRedo: () => void;
   onTogglePreview: () => void;
+  onSaveDraft: () => void;
+  onPublish: () => void;
 }): ReactNode {
   const isPreview = props.state.canvasMode === "preview";
   const errorCount = props.diagnostics.filter((diagnostic) => diagnostic.severity === "error").length;
   const warningCount = props.diagnostics.filter((diagnostic) => diagnostic.severity === "warning").length;
+  const saveDisabled = props.persistenceState?.status === "saving" || props.persistenceState?.status === "loading";
 
   return (
     <header className="rfb-command-bar" role="banner" aria-label="Builder command bar">
@@ -512,6 +570,12 @@ function CommandBar(props: {
         <IconButton type="button" aria-label="Redo" onClick={props.onRedo} disabled={!props.state.canRedo}>R</IconButton>
         <Badge>{errorCount} errors</Badge>
         <Badge>{warningCount} warnings</Badge>
+        <Button type="button" onClick={props.onSaveDraft} disabled={saveDisabled}>
+          {props.persistenceState?.status === "saving" ? "Saving" : "Save draft"}
+        </Button>
+        <Button type="button" variant="primary" onClick={props.onPublish} disabled={!props.publishChecklist.canPublish}>
+          Publish
+        </Button>
         <Button type="button" variant={isPreview ? "accent" : "secondary"} aria-pressed={isPreview} onClick={props.onTogglePreview}>
           {isPreview ? "Edit" : "Preview"}
         </Button>
@@ -525,6 +589,146 @@ function CommandBar(props: {
       ) : null}
     </header>
   );
+}
+
+function BuilderWorkflowPanels(props: {
+  persistenceState?: BuilderPersistenceState | undefined;
+  publishChecklist: PublishChecklist;
+  artifactBundle?: BuilderArtifactBundle | undefined;
+  revisionComparison: ReturnType<typeof compareDraftToPublished>;
+  onRetrySave?: (() => void) | undefined;
+  onReloadLatest?: (() => void) | undefined;
+  onPreserveLocalEdits?: (() => void) | undefined;
+}): ReactNode {
+  const showRevision = props.revisionComparison.latestPublished || props.revisionComparison.warnings.length > 0;
+  return (
+    <section className="rfb-workflow-panels" aria-label="Persistence and publish workflow">
+      {props.persistenceState ? (
+        <PersistenceStatusPanel
+          state={props.persistenceState}
+          onRetrySave={props.onRetrySave}
+          onReloadLatest={props.onReloadLatest}
+          onPreserveLocalEdits={props.onPreserveLocalEdits}
+        />
+      ) : null}
+      <PublishChecklistPanel checklist={props.publishChecklist} />
+      {showRevision ? <RevisionWarningPanel comparison={props.revisionComparison} /> : null}
+      {props.artifactBundle ? <GeneratedArtifactPanel bundle={props.artifactBundle} /> : null}
+    </section>
+  );
+}
+
+function PersistenceStatusPanel(props: {
+  state: BuilderPersistenceState;
+  onRetrySave?: (() => void) | undefined;
+  onReloadLatest?: (() => void) | undefined;
+  onPreserveLocalEdits?: (() => void) | undefined;
+}): ReactNode {
+  const severity = props.state.status === "failed" || props.state.status === "conflicted" ? "warning" : props.state.status === "saved" ? "success" : "info";
+  return (
+    <Alert severity={severity}>
+      <div className="rfb-workflow-row">
+        <strong>Draft {props.state.status}</strong>
+        <span>{props.state.message ?? persistenceMessage(props.state)}</span>
+        {props.state.status === "conflicted" ? (
+          <span className="rfb-inline">
+            <Button type="button" onClick={props.onReloadLatest}>Reload latest</Button>
+            <Button type="button" onClick={props.onRetrySave} disabled={!props.state.canRetry}>Retry</Button>
+            <Button type="button" onClick={props.onPreserveLocalEdits}>Keep local edits</Button>
+          </span>
+        ) : null}
+        {props.state.status === "failed" ? (
+          <Button type="button" onClick={props.onRetrySave} disabled={!props.state.canRetry}>Retry save</Button>
+        ) : null}
+      </div>
+    </Alert>
+  );
+}
+
+function PublishChecklistPanel(props: { checklist: PublishChecklist }): ReactNode {
+  const items = props.checklist.items.slice(0, 6);
+  return (
+    <div className="rfb-workflow-card" role="region" aria-label="Publish checklist" data-can-publish={props.checklist.canPublish ? "true" : "false"}>
+      <div className="rfb-workflow-card-header">
+        <strong>Publish checklist</strong>
+        <Badge>{props.checklist.blocking.length} blockers</Badge>
+        <Badge>{props.checklist.warnings.length} warnings</Badge>
+      </div>
+      {items.length > 0 ? (
+        <ul className="rfb-check-list">
+          {items.map((item) => (
+            <li key={item.id} data-severity={item.severity}>
+              <strong>{item.label}</strong>
+              <span>{item.message}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <span className="rfb-help">No publish blockers detected.</span>
+      )}
+    </div>
+  );
+}
+
+function RevisionWarningPanel(props: { comparison: ReturnType<typeof compareDraftToPublished> }): ReactNode {
+  return (
+    <div className="rfb-workflow-card" role="region" aria-label="Revision warnings">
+      <div className="rfb-workflow-card-header">
+        <strong>Revision review</strong>
+        {props.comparison.latestPublished ? <Badge dir="ltr">{props.comparison.latestPublished.revisionId}</Badge> : null}
+      </div>
+      <span className="rfb-help" dir="ltr">
+        Draft {props.comparison.currentRevisionId || "missing"} / {props.comparison.currentRevisionHash || "missing"}
+      </span>
+      {props.comparison.warnings.length > 0 ? (
+        <ul className="rfb-check-list">
+          {props.comparison.warnings.map((warning) => (
+            <li key={warning.id} data-severity="warning">
+              <strong>{warning.label}</strong>
+              <span>{warning.message}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+function GeneratedArtifactPanel(props: { bundle: BuilderArtifactBundle }): ReactNode {
+  return (
+    <details className="rfb-workflow-card">
+      <summary>Generated artifacts</summary>
+      <div className="rfb-artifact-grid">
+        <Badge dir="ltr">{props.bundle.dialect}</Badge>
+        <Badge>{props.bundle.diagnostics.length} diagnostics</Badge>
+        <Badge>{props.bundle.validationPlan.length} validation-plan entries</Badge>
+        <Badge>{props.bundle.conditionDependencies.length} condition dependencies</Badge>
+        <Badge>{props.bundle.fixtureReferences.length} fixtures</Badge>
+      </div>
+      <pre className="rfb-code rfb-artifact-code">{JSON.stringify(props.bundle.schema, null, 2)}</pre>
+    </details>
+  );
+}
+
+function persistenceMessage(state: BuilderPersistenceState): string {
+  switch (state.status) {
+    case "loading":
+      return "Loading draft from host persistence.";
+    case "dirty":
+      return "Local edits have not been saved.";
+    case "saving":
+      return "Saving draft.";
+    case "saved":
+      return state.lastSavedAt ? `Saved at ${state.lastSavedAt}.` : "Draft saved.";
+    case "failed":
+      return "Draft save failed.";
+    case "retrying":
+      return "Retrying draft save.";
+    case "conflicted":
+      return "Draft has a host conflict.";
+    case "idle":
+      return "Draft persistence is idle.";
+  }
 }
 
 function Palette(props: { schema: BuilderSchema; onAdd: (item: PaletteItemDefinition) => void }): ReactNode {

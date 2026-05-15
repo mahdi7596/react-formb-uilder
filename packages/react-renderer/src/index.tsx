@@ -27,6 +27,7 @@ import {
   type ValidationErrorContract,
   type ValidationRule
 } from "@your-org/forms-core";
+import type { AdapterResult, SubmitFormData } from "@your-org/forms-adapters";
 
 export interface RendererOption {
   id?: string;
@@ -144,7 +145,8 @@ export interface RendererSlots {
 
 export type RendererSubmissionStatus = "idle" | "submitting" | "success" | "validation_error" | "server_error" | "auth_error" | "rate_limited" | "conflict";
 
-export type SubmissionAdapter = (envelope: SubmissionEnvelope) => Promise<BackendResponse | void> | BackendResponse | void;
+export type SubmissionAdapterResult = BackendResponse | AdapterResult<SubmitFormData> | void;
+export type SubmissionAdapter = (envelope: SubmissionEnvelope) => Promise<SubmissionAdapterResult> | SubmissionAdapterResult;
 
 export interface FormRendererProps {
   schema: RendererSchema | Record<string, unknown>;
@@ -297,6 +299,35 @@ export function FormRenderer(props: FormRendererProps): ReactNode {
     return flattenRenderableChildren(activeStep, nodeModel, isVisible).filter(isSubmittableField);
   }, [activeStep, isVisible, nodeModel]);
 
+  const handleBackendResponse = useCallback((response: BackendResponse) => {
+    const parsed = parseBackendResponse(response);
+    const parsedResponse = parsed.value;
+    if (!parsedResponse) {
+      setStatus("server_error");
+      setGlobalMessages(["Submission failed."]);
+      return;
+    }
+
+    setStatus(parsedResponse.status);
+    if (parsedResponse.ok) {
+      setGlobalMessages([parsedResponse.message ?? "Submission received."]);
+      return;
+    }
+
+    const serverFieldErrors: Record<string, string[]> = {};
+    for (const error of parsedResponse.fieldErrors) {
+      if (typeof error.path === "string") {
+        serverFieldErrors[error.path] = [...(serverFieldErrors[error.path] ?? []), error.message ?? error.code];
+      }
+    }
+    setFieldErrors(serverFieldErrors);
+    setGlobalMessages([
+      ...parsedResponse.globalErrors.map((error) => error.message ?? error.code),
+      ...(parsedResponse.message ? [parsedResponse.message] : [])
+    ]);
+    focusFirstError(serverFieldErrors, focusTargets.current);
+  }, []);
+
   const submit = useCallback(async () => {
     const fields = schema.settings?.navigation === "steps"
       ? currentStepFields()
@@ -327,33 +358,18 @@ export function FormRenderer(props: FormRendererProps): ReactNode {
       return;
     }
 
-    const parsed = parseBackendResponse(response);
-    const parsedResponse = parsed.value;
-    if (!parsedResponse) {
-      setStatus("server_error");
-      setGlobalMessages(["Submission failed."]);
-      return;
-    }
-
-    setStatus(parsedResponse.status);
-    if (parsedResponse.ok) {
-      setGlobalMessages([parsedResponse.message ?? "Submission received."]);
-      return;
-    }
-
-    const serverFieldErrors: Record<string, string[]> = {};
-    for (const error of parsedResponse.fieldErrors) {
-      if (typeof error.path === "string") {
-        serverFieldErrors[error.path] = [...(serverFieldErrors[error.path] ?? []), error.message ?? error.code];
+    if (isAdapterResult(response)) {
+      if (!response.ok) {
+        setStatus(rendererStatusFromAdapter(response.status));
+        setGlobalMessages([response.message ?? "Submission failed."]);
+        return;
       }
+      handleBackendResponse(response.data.response as unknown as BackendResponse);
+      return;
     }
-    setFieldErrors(serverFieldErrors);
-    setGlobalMessages([
-      ...parsedResponse.globalErrors.map((error) => error.message ?? error.code),
-      ...(parsedResponse.message ? [parsedResponse.message] : [])
-    ]);
-    focusFirstError(serverFieldErrors, focusTargets.current);
-  }, [currentStepFields, props, schema, validateNodes, values]);
+
+    handleBackendResponse(response);
+  }, [currentStepFields, handleBackendResponse, props, schema, validateNodes, values]);
 
   const goNext = useCallback(() => {
     if (!validateNodes(currentStepFields())) {
@@ -734,6 +750,17 @@ function isRendererNode(value: unknown): value is RendererNode {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function isAdapterResult(value: unknown): value is AdapterResult<SubmitFormData> {
+  return isRecord(value) && typeof value.ok === "boolean" && typeof value.status === "string" && "diagnostics" in value;
+}
+
+function rendererStatusFromAdapter(status: string): RendererSubmissionStatus {
+  if (status === "validation_error" || status === "auth_error" || status === "rate_limited" || status === "conflict") {
+    return status;
+  }
+  return "server_error";
 }
 
 function readValidation(node: RendererNode): ValidationRule[] {

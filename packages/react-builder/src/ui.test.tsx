@@ -7,12 +7,15 @@ import { userEvent } from "@testing-library/user-event";
 import { axe } from "vitest-axe";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
+import { createBuilderArtifactBundle } from "@your-org/forms-validators";
+
 import {
   BuilderWorkspace,
   Button,
   EmptyState,
   TextInput,
   createBuilderStyles,
+  createPersistenceState,
   type BuilderSchema
 } from "./index.js";
 
@@ -119,6 +122,53 @@ describe("BuilderWorkspace shell", () => {
 
     expect(screen.getByRole("button", { name: "Email" })).toBeInTheDocument();
   });
+
+  it("renders persistence, publish, revision, and generated artifact workflow states", async () => {
+    const user = userEvent.setup();
+    const onSaveDraft = vi.fn();
+    const onPublish = vi.fn();
+    const onReloadLatest = vi.fn();
+    const artifactBundle = createBuilderArtifactBundle(populatedSchema, {
+      generatedAt: "2026-05-15T00:00:00.000Z"
+    });
+
+    render(
+      <BuilderWorkspace
+        schema={populatedSchema}
+        persistenceState={createPersistenceState("conflicted", { message: "Host has a newer draft." })}
+        artifactBundle={artifactBundle}
+        latestPublishedRevision={{
+          formId: "phase_8_builder",
+          revisionId: "rev_published",
+          revisionHash: "sha256:published",
+          status: "published",
+          schemaVersion: "1.0.0",
+          publishedAt: "2026-05-15T00:00:00.000Z",
+          immutable: true
+        }}
+        onSaveDraft={onSaveDraft}
+        onPublish={onPublish}
+        onReloadLatest={onReloadLatest}
+      />
+    );
+
+    expect(screen.getByRole("region", { name: "Persistence and publish workflow" })).toBeInTheDocument();
+    expect(screen.getByText("Draft conflicted")).toBeInTheDocument();
+    expect(screen.getByText("Host has a newer draft.")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Publish checklist" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Revision warnings" })).toBeInTheDocument();
+    expect(screen.getByText("Generated artifacts")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Save draft" }));
+    await user.click(screen.getByRole("button", { name: "Publish" }));
+    await user.click(screen.getByRole("button", { name: "Reload latest" }));
+
+    expect(onSaveDraft).toHaveBeenCalledTimes(1);
+    expect(onSaveDraft).toHaveBeenCalledWith(populatedSchema);
+    expect(onPublish).toHaveBeenCalledTimes(1);
+    expect(onPublish).toHaveBeenCalledWith(populatedSchema);
+    expect(onReloadLatest).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("builder palette and canvas", () => {
@@ -184,7 +234,7 @@ describe("builder palette and canvas", () => {
     expect(screen.getAllByText(/email input preview/i)).toHaveLength(2);
 
     await user.click(screen.getAllByRole("button", { name: "Delete field" })[0] as HTMLElement);
-    expect(screen.getByText("Deleting a submittable field can break stored responses.")).toBeInTheDocument();
+    expect(screen.getAllByText("Deleting a submittable field can break stored responses.").length).toBeGreaterThan(0);
   });
 });
 

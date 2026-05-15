@@ -20,7 +20,7 @@
       "@your-org/forms-adapters": ["packages/adapters/src/index.ts"],
       "@your-org/forms-core": ["packages/core/src/index.ts"],
       "@your-org/forms-react-builder": ["packages/react-builder/src/index.ts"],
-      "@your-org/forms-react-renderer": ["packages/react-renderer/src/index.ts"],
+      "@your-org/forms-react-renderer": ["packages/react-renderer/src/index.tsx"],
       "@your-org/forms-themes": ["packages/themes/src/index.ts"],
       "@your-org/forms-validators": ["packages/validators/src/index.ts"]
     },

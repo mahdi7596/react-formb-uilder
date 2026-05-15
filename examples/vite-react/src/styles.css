@@ -1,0 +1,288 @@
+:root {
+  color: #17211b;
+  background: #f6f7f4;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-synthesis: none;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+code {
+  font-size: 0.95em;
+}
+
+.example-shell {
+  min-height: 100vh;
+  padding: 32px;
+}
+
+.example-header {
+  margin: 0 auto 24px;
+  max-width: 1180px;
+}
+
+.example-header h1 {
+  margin: 4px 0 10px;
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+.example-header p {
+  margin: 0;
+  max-width: 760px;
+  color: #526056;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #2d6a4f;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.mode-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 auto 18px;
+  max-width: 1180px;
+}
+
+.mode-button,
+.rfb-button {
+  border: 1px solid #b9c4bd;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #17211b;
+  min-height: 40px;
+  padding: 8px 12px;
+}
+
+.mode-button.active,
+.rfb-submit-button {
+  border-color: #1f7a5a;
+  background: #1f7a5a;
+  color: #ffffff;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+  gap: 18px;
+  margin: 0 auto;
+  max-width: 1180px;
+  align-items: start;
+}
+
+.builder-panel,
+.form-panel,
+.debug-panel {
+  border: 1px solid #d7ddd8;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgb(31 42 35 / 8%);
+}
+
+.builder-panel {
+  grid-column: 1 / -1;
+  padding: 18px;
+}
+
+.builder-panel .rfb-builder {
+  border: 1px solid #d7ddd8;
+  border-radius: 8px;
+  min-height: 760px;
+}
+
+.builder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.builder-actions button {
+  border: 1px solid #b9c4bd;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #17211b;
+  min-height: 38px;
+  padding: 8px 12px;
+}
+
+.form-panel {
+  padding: 24px;
+}
+
+.debug-panel {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  position: sticky;
+  top: 18px;
+}
+
+.example-context {
+  border-bottom: 1px solid #e3e8e4;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+}
+
+.example-context h2 {
+  margin: 4px 0 6px;
+}
+
+.example-context p {
+  margin: 0;
+  color: #526056;
+}
+
+.control-label {
+  display: grid;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.debug-panel select,
+.rfb-input {
+  width: 100%;
+}
+
+.debug-card {
+  display: grid;
+  gap: 8px;
+}
+
+.debug-card h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.debug-card pre {
+  overflow: auto;
+  margin: 0;
+  max-height: 300px;
+  border: 1px solid #d7ddd8;
+  border-radius: 6px;
+  background: #f8faf8;
+  padding: 12px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.rfb-form h2 {
+  margin-top: 0;
+}
+
+.rfb-form-description {
+  color: #526056;
+}
+
+.rfb-input,
+.rfb-fieldset {
+  border-color: #b9c4bd;
+}
+
+.rfb-input:focus,
+.mode-button:focus-visible,
+.rfb-button:focus-visible,
+.debug-panel select:focus {
+  outline: 3px solid rgb(45 106 79 / 24%);
+  outline-offset: 2px;
+}
+
+.rfb-fieldset {
+  display: grid;
+  gap: 8px;
+  border: 1px solid #b9c4bd;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.rfb-fieldset label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.rfb-section,
+.rfb-step {
+  display: grid;
+  gap: 14px;
+}
+
+.rfb-section-title,
+.rfb-step-title {
+  margin: 0;
+}
+
+.rfb-messages:not(:empty) {
+  border-left: 4px solid #1f7a5a;
+  background: #edf8f2;
+  padding: 10px 12px;
+}
+
+.rfb-messages[data-rfb-submission-status="validation_error"],
+.rfb-messages[data-rfb-submission-status="conflict"],
+.rfb-messages[data-rfb-submission-status="auth_error"],
+.rfb-messages[data-rfb-submission-status="rate_limited"],
+.rfb-messages[data-rfb-submission-status="server_error"] {
+  border-left-color: #b42318;
+  background: #fff3f0;
+}
+
+.rfb-messages p {
+  margin: 0;
+}
+
+[dir="rtl"] .rfb-messages {
+  border-right: 4px solid #1f7a5a;
+  border-left: 0;
+}
+
+@media (max-width: 820px) {
+  .example-shell {
+    padding: 18px;
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .debug-panel {
+    position: static;
+  }
+}

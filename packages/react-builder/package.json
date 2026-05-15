@@ -24,8 +24,11 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@tanstack/react-query": "^5.100.10",
+    "@your-org/forms-adapters": "workspace:*",
     "@your-org/forms-core": "workspace:*",
-    "@your-org/forms-react-renderer": "workspace:*"
+    "@your-org/forms-react-renderer": "workspace:*",
+    "@your-org/forms-validators": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=18.2.0 || >=19.0.0",

@@ -2,16 +2,31 @@
   "name": "@your-org/forms-example-vite-react",
   "version": "0.0.0",
   "private": true,
-  "description": "Vite React example placeholder for future renderer and builder demos.",
+  "description": "Runnable Vite React example proving the form renderer in a browser.",
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "lint": "eslint .",
+    "preview": "vite preview --host 127.0.0.1",
+    "test:e2e": "playwright test",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@your-org/forms-core": "workspace:*"
+    "@your-org/forms-adapters": "workspace:*",
+    "@your-org/forms-core": "workspace:*",
+    "@your-org/forms-react-builder": "workspace:*",
+    "@your-org/forms-react-renderer": "workspace:*",
+    "@your-org/forms-validators": "workspace:*",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "vite": "^7.2.7"
+  }
 }

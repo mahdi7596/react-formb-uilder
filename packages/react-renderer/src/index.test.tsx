@@ -8,6 +8,7 @@ import { axe } from "vitest-axe";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { Ref } from "react";
 import type { BackendResponse, SubmissionEnvelope, ValidationErrorContract } from "@your-org/forms-core";
+import { adapterFailure, adapterSuccess } from "@your-org/forms-adapters";
 
 import {
   FormRenderer,
@@ -248,6 +249,27 @@ describe("FormRenderer", () => {
     expect(await screen.findByText("Use a work email.")).toBeTruthy();
     expect(screen.getByText("Submission blocked.")).toBeTruthy();
     expect(screen.getByLabelText("Email")).toHaveFocus();
+  });
+
+  it("submits through normalized adapter results", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi
+      .fn()
+      .mockResolvedValueOnce(adapterFailure("server_error", { message: "Adapter failed." }))
+      .mockResolvedValueOnce(adapterSuccess({ response: successResponse("sub_adapter") }));
+    const schema = {
+      ...baseSchema,
+      nodes: [{ id: "email", type: "field", fieldType: "email", name: "email", label: "Email" }]
+    };
+
+    render(<FormRenderer schema={schema} onSubmit={onSubmit} />);
+
+    await user.type(screen.getByLabelText("Email"), "jane@example.com");
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+    expect(await screen.findByText("Adapter failed.")).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+    expect(await screen.findByText("Submission received.")).toBeTruthy();
   });
 
   it("supports custom field registry entries and slots without giving slots core semantics", async () => {

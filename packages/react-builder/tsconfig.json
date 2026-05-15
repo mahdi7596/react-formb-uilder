@@ -8,5 +8,5 @@
     "tsBuildInfoFile": "tsconfig.tsbuildinfo"
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "references": [{ "path": "../core" }, { "path": "../react-renderer" }]
+  "references": [{ "path": "../adapters" }, { "path": "../core" }, { "path": "../react-renderer" }, { "path": "../validators" }]
 }

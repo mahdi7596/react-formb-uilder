@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { compileJsonSchema } from "./index.js";
+import { compileJsonSchema, createBuilderArtifactBundle } from "./index.js";
 import type { JsonSchemaObject } from "./json-schema/index.js";
 
 const baseSchema = {
@@ -187,6 +187,51 @@ describe("json schema compiler", () => {
     );
     expect(result.conditionDependencies).toEqual(
       expect.arrayContaining([expect.objectContaining({ nodeId: "company", dependsOn: ["hasCompany"] })])
+    );
+  });
+
+  it("creates a builder artifact bundle for publish review", () => {
+    const result = createBuilderArtifactBundle(
+      {
+        ...baseSchema,
+        nodes: [
+          {
+            id: "company",
+            type: "field",
+            fieldType: "text",
+            name: "company",
+            visibility: { field: "hasCompany", op: "eq", value: true },
+            validation: [{ type: "custom:businessEmail", version: "1.0.0" }]
+          }
+        ]
+      },
+      { generatedAt: "2026-05-15T00:00:00.000Z", fixtureCategories: ["schema", "compiler-diagnostic"] }
+    );
+
+    expect(result.dialect).toBe("https://json-schema.org/draft/2020-12/schema");
+    expect(result.generatedAt).toBe("2026-05-15T00:00:00.000Z");
+    expect(result.schema).toMatchObject({
+      $schema: "https://json-schema.org/draft/2020-12/schema",
+      type: "object"
+    });
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
+      expect.arrayContaining(["condition_not_representable", "custom_validator_not_representable"])
+    );
+    expect(result.diagnostics.every((diagnostic) => diagnostic.severity === "warning" || diagnostic.severity === "error")).toBe(true);
+    expect(result.validationPlan).toEqual(
+      expect.arrayContaining([expect.objectContaining({ nodeId: "company", ruleType: "custom:businessEmail" })])
+    );
+    expect(result.conditionDependencies).toEqual(
+      expect.arrayContaining([expect.objectContaining({ nodeId: "company", dependsOn: ["hasCompany"] })])
+    );
+    expect(result.fixtureReferences).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "schema.valid.minimal-contact", category: "schema" }),
+        expect.objectContaining({ id: "compiler-diagnostic.dangerous-key", category: "compiler-diagnostic" })
+      ])
+    );
+    expect(new Set(result.fixtureReferences.map((reference) => reference.category))).toEqual(
+      new Set(["schema", "compiler-diagnostic"])
     );
   });
 });

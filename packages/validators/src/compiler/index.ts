@@ -4,10 +4,12 @@ import {
   DIAGNOSTIC_CODES,
   extractConditionDependencies,
   findDangerousKeys,
+  fixtureManifest,
   parseSubmittedPath,
   type Diagnostic,
   type DiagnosticCode,
-  type DiagnosticSeverity
+  type DiagnosticSeverity,
+  type FixtureCategory
 } from "@your-org/forms-core";
 
 import { createRootJsonSchema, type JsonSchemaObject } from "../json-schema/index.js";
@@ -38,6 +40,29 @@ export interface JsonSchemaCompilerResult {
 
 export interface JsonSchemaCompilerOptions {
   additionalProperties?: boolean;
+}
+
+export interface BuilderArtifactFixtureReference {
+  id: string;
+  category: FixtureCategory;
+  expect: "pass" | "fail";
+  diagnostics: string[];
+  description: string;
+}
+
+export interface BuilderArtifactBundle {
+  schema: JsonSchemaObject;
+  diagnostics: CompilerDiagnostic[];
+  validationPlan: ValidationPlanEntry[];
+  conditionDependencies: ConditionDependencyEntry[];
+  dialect: "https://json-schema.org/draft/2020-12/schema";
+  generatedAt: string;
+  fixtureReferences: BuilderArtifactFixtureReference[];
+}
+
+export interface BuilderArtifactBundleOptions extends JsonSchemaCompilerOptions {
+  generatedAt?: string;
+  fixtureCategories?: FixtureCategory[];
 }
 
 const STRING_FIELDS = new Set(["text", "textarea", "phone"]);
@@ -132,6 +157,19 @@ export function compileJsonSchema(
   };
 }
 
+export function createBuilderArtifactBundle(
+  schemaInput: unknown,
+  options: BuilderArtifactBundleOptions = {}
+): BuilderArtifactBundle {
+  const result = compileJsonSchema(schemaInput, options);
+  return {
+    ...result,
+    dialect: "https://json-schema.org/draft/2020-12/schema",
+    generatedAt: options.generatedAt ?? "deterministic",
+    fixtureReferences: fixtureReferencesFor(options.fixtureCategories)
+  };
+}
+
 function compileFieldSchema(
   node: Record<string, unknown>,
   diagnostics: CompilerDiagnostic[]
@@ -181,6 +219,19 @@ function compileFieldSchema(
 
   diagnostics.push(compilerDiagnostic(DIAGNOSTIC_CODES.unknownFieldType, "error", `nodes.${String(node.id ?? "")}.fieldType`));
   return null;
+}
+
+function fixtureReferencesFor(categories: FixtureCategory[] = ["schema", "submission", "response", "compiler-diagnostic"]): BuilderArtifactFixtureReference[] {
+  const categorySet = new Set<FixtureCategory>(categories);
+  return fixtureManifest.fixtures
+    .filter((entry) => categorySet.has(entry.category))
+    .map((entry) => ({
+      id: entry.id,
+      category: entry.category,
+      expect: entry.expect,
+      diagnostics: [...entry.diagnostics],
+      description: entry.description
+    }));
 }
 
 function applyValidationRules(
