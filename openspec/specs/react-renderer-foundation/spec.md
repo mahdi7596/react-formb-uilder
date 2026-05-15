@@ -1,9 +1,7 @@
 ## Purpose
 
 Define the React respondent renderer foundation for canonical form schemas. The renderer provides product-owned React APIs, built-in field rendering, accessibility wiring, structural rendering, core-backed runtime behavior, submission handling, host customization hooks, and verification expectations without exposing internal form-state libraries or backend-specific transport contracts.
-
 ## Requirements
-
 ### Requirement: Public renderer API
 The React renderer package SHALL expose a product-owned public API for rendering canonical form schemas without exposing internal form-state library types.
 
@@ -218,3 +216,22 @@ The renderer accessibility contract SHALL be documented for built-in and custom 
 #### Scenario: Custom fields preserve renderer-managed accessibility
 - **WHEN** the accessibility field contract is inspected
 - **THEN** it states that custom fields must use renderer-managed ids, accessible names, descriptions, error references, invalid state, disabled/required state, and focus refs provided by the renderer
+
+### Requirement: Renderer release-candidate audit
+The React renderer SHALL be audited for MVP release-candidate readiness across public API shape, accessibility, RTL/LTR behavior, validation behavior, and submission behavior.
+
+#### Scenario: Renderer accessibility is audited
+- **WHEN** Phase 13 renderer checks run
+- **THEN** built-in field labels, descriptions, errors, required and disabled states, first-invalid focus, validation summaries, and custom field contract examples are verified with automated or documented manual accessibility evidence
+
+#### Scenario: Renderer RTL and LTR behavior is audited
+- **WHEN** Phase 13 renderer direction checks run
+- **THEN** LTR and RTL form rendering, labels, descriptions, errors, step navigation, submitted paths, and debug output remain readable and directionally correct
+
+#### Scenario: Renderer submission flow is audited
+- **WHEN** Phase 13 renderer submission checks run
+- **THEN** normalized submission envelopes, hidden-field semantics, backend validation errors, global messages, and submission statuses are verified against current contracts
+
+#### Scenario: Renderer public API hygiene is audited
+- **WHEN** Phase 13 renderer package checks run
+- **THEN** public renderer exports avoid leaking React Hook Form types, internal state libraries, or backend-specific transport objects

@@ -1,8 +1,6 @@
 ## Purpose
 Define the canonical schema, submission, validation, condition, response, extension, JSON Schema artifact, and conformance contracts that keep the form builder backend-agnostic and safe across runtimes.
-
 ## Requirements
-
 ### Requirement: Canonical schema contract documentation
 The project SHALL define a canonical schema v1 documentation contract before implementing core runtime behavior.
 
@@ -149,3 +147,26 @@ Extension documentation SHALL explain how custom fields, validators, and predica
 #### Scenario: Backend parity is explicit
 - **WHEN** extension docs are inspected
 - **THEN** they explain when custom validators or predicates need backend parity and how missing parity should appear in diagnostics or generated artifact review
+
+### Requirement: Canonical contract release-candidate safety audit
+Canonical schema, path, validation, condition, extension, submission, and backend response contracts SHALL be audited for release-candidate safety.
+
+#### Scenario: Dangerous keys are audited
+- **WHEN** Phase 13 safety checks run
+- **THEN** dangerous keys such as `__proto__`, `constructor`, and `prototype` are verified as rejected in schemas, defaults, props, metadata, submitted paths, submissions, and backend responses where the current contracts require rejection
+
+#### Scenario: Executable content exclusion is audited
+- **WHEN** Phase 13 schema safety checks run
+- **THEN** schemas are verified to reject or diagnose executable JavaScript, React components, DOM objects, backend SDK objects, transport objects, and unsupported rich text behavior
+
+#### Scenario: Hidden value and normalization behavior is audited
+- **WHEN** Phase 13 submission checks run
+- **THEN** hidden-field value semantics, submitted path normalization, duplicate path handling, invalid path diagnostics, and normalized submission envelopes are verified against current contracts
+
+#### Scenario: Extension fail-closed behavior is audited
+- **WHEN** Phase 13 extension checks run
+- **THEN** unknown custom fields, validators, and predicates fail closed with diagnostics rather than silently submitting, validating, or evaluating unsupported behavior
+
+#### Scenario: Condition dependency behavior is audited
+- **WHEN** Phase 13 condition checks run
+- **THEN** deterministic condition evaluation, dependency tracking, invalid references, and cycle diagnostics are verified against current contracts

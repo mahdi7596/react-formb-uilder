@@ -1,9 +1,7 @@
 ## Purpose
 
 Define backend-agnostic persistence, publish, revision, and submission adapter contracts for host integrations. This capability keeps `packages/adapters` thin and JSON-first, keeps `packages/core` transport-free, models immutable published revisions, and defines the verification expectations for persistence/publish workflows.
-
 ## Requirements
-
 ### Requirement: Adapter operation contracts
 The adapters package SHALL define backend-agnostic JSON contracts for loading forms, saving drafts, publishing revisions, listing revisions, loading published forms, and submitting normalized form submissions.
 
@@ -126,3 +124,22 @@ The project SHALL document revision immutability, draft conflict handling, publi
 #### Scenario: Dangerous changes are named
 - **WHEN** the revision migration doc is inspected
 - **THEN** it names submitted path rename, field deletion, scalar/array shape change, option value change, requiredness change, hidden-value policy change, and field type change as dangerous or review-worthy changes
+
+### Requirement: Persistence and publish release-candidate audit
+Persistence, publish, revision, and submission adapter behavior SHALL be audited before the MVP package set is considered release-candidate ready.
+
+#### Scenario: Publish immutability is audited
+- **WHEN** Phase 13 persistence checks run
+- **THEN** published revision immutability, draft editing behavior, generated artifact snapshots, revision metadata, and revision hash behavior are verified against the current contracts
+
+#### Scenario: Submission revision integrity is audited
+- **WHEN** Phase 13 submission checks run
+- **THEN** submissions include the correct `revisionId`, `revisionHash`, schema version, attempt identity, locale, normalized data, file metadata, and JSON-serializable metadata
+
+#### Scenario: Adapter response mapping is audited
+- **WHEN** Phase 13 adapter checks run
+- **THEN** success, validation error, conflict, auth error, rate-limit, server error, network error, malformed response, blocked, and dangerous-key outcomes map to normalized product-owned statuses
+
+#### Scenario: Adapter public boundaries are audited
+- **WHEN** Phase 13 adapter package checks run
+- **THEN** adapter contracts do not require React state, TanStack Query objects, backend SDK exceptions, or transport-specific response objects in public product APIs
