@@ -8,7 +8,8 @@ import {
   type BuilderPersistenceState,
   type BuilderSchema
 } from "@your-org/forms-react-builder";
-import { FormRenderer, createRendererStyles } from "@your-org/forms-react-renderer";
+import { FormRenderer } from "@your-org/forms-react-renderer";
+import { createDefaultThemeStyles } from "@your-org/forms-themes";
 import { createBuilderArtifactBundle } from "@your-org/forms-validators";
 
 import {
@@ -141,7 +142,7 @@ export function App() {
 
   return (
     <main className="example-shell">
-      <style>{createRendererStyles()}</style>
+      <style>{createDefaultThemeStyles({ selector: ":root" })}</style>
       <header className="example-header">
         <div>
           <p className="eyebrow">Phase 6 renderer proof</p>
@@ -179,6 +180,7 @@ export function App() {
             <button type="button" onClick={forcePublishConflict}>Simulate publish conflict</button>
           </div>
           <BuilderWorkspace
+            className="builder-theme-override"
             schema={builderSchema}
             persistenceState={persistenceState}
             publishChecklist={publishChecklist}
@@ -200,6 +202,7 @@ export function App() {
           </div>
 
           <FormRenderer
+            className="host-theme-override"
             key={`${mode}:${activeScenario}`}
             schema={example.schema}
             onSubmit={handleSubmit}

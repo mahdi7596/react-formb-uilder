@@ -14,6 +14,7 @@
     { "path": "../../packages/core" },
     { "path": "../../packages/react-builder" },
     { "path": "../../packages/react-renderer" },
+    { "path": "../../packages/themes" },
     { "path": "../../packages/validators" }
   ]
 }

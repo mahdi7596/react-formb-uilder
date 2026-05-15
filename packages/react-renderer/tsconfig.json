@@ -8,5 +8,5 @@
     "tsBuildInfoFile": "tsconfig.tsbuildinfo"
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "references": [{ "path": "../adapters" }, { "path": "../core" }]
+  "references": [{ "path": "../adapters" }, { "path": "../core" }, { "path": "../themes" }]
 }

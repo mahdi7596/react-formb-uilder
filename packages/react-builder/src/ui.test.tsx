@@ -90,7 +90,12 @@ describe("builder UI primitives", () => {
     expect(button).toHaveFocus();
     expect(screen.getByLabelText("Submitted path")).toHaveAttribute("dir", "ltr");
     expect(screen.getByText("No fields")).toBeInTheDocument();
-    expect(createBuilderStyles()).toContain("min-block-size:38px");
+    const builderStyles = createBuilderStyles();
+    expect(builderStyles).toContain("--rfb-color-primary:#315CFF;");
+    expect(builderStyles).toContain("--fb-primary:var(--rfb-color-primary);");
+    expect(builderStyles).toContain("min-block-size:38px");
+    expect(builderStyles).toContain(":focus-visible");
+    expect(builderStyles).toContain("prefers-reduced-motion: reduce");
 
     const result = await axe(document.body);
     expect(result.violations).toEqual([]);
@@ -287,5 +292,8 @@ describe("builder responsive surface", () => {
     expect(styles).toContain("@media (max-width: 1024px)");
     expect(styles).toContain("@media (max-width: 720px)");
     expect(styles).toContain("inline-size:min(360px,88vw)");
+    expect(styles).toContain(".rfb-workflow-card[data-can-publish=\"false\"]");
+    expect(styles).toContain(".rfb-node[data-drop-active=\"true\"]");
+    expect(styles).toContain(".rfb-drop-feedback[data-status=\"invalid\"]");
   });
 });

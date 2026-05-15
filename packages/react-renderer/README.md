@@ -1,15 +1,23 @@
 # @your-org/forms-react-renderer
 
-Phase 0 placeholder package for the public respondent renderer.
+Public React renderer for respondent-facing forms.
 
 ## Responsibility
 
-This package will own React rendering, field registry integration, renderer slots, renderer hooks, accessibility wiring, step orchestration, and optional internal React Hook Form integration.
+This package renders canonical schemas with product-owned field contracts, renderer slots, accessibility ids, validation errors, submission status messages, step navigation, and normalized submission envelopes.
 
-## Boundary
+React Hook Form may be used internally later, but it must remain hidden behind this package's API. Canonical schema behavior, hidden-value semantics, validation primitives, submitted-path parsing, and submission contracts belong in `@your-org/forms-core`.
 
-React Hook Form, if used later, must remain hidden behind this product's renderer API. This package must not define canonical schema behavior that belongs in `@your-org/forms-core`.
+## Theme Boundary
 
-## Phase 0 Status
+`createRendererStyles()` composes the default renderer theme from `@your-org/forms-themes`. The renderer keeps stable class hooks and data attributes such as:
 
-No renderer behavior is implemented here yet. The current source entrypoint is only a bootstrap placeholder so the monorepo can typecheck, test, and build.
+- `.rfb-form`, `.rfb-field`, `.rfb-label`, `.rfb-description`, `.rfb-error`
+- `.rfb-section`, `.rfb-step`, `.rfb-messages`, `.rfb-navigation`, `.rfb-submit-button`
+- `data-rfb-field-type`, `data-rfb-invalid`, `data-rfb-disabled`, `data-rfb-submission-status`
+
+Hosts can use `createRendererStyles()`, import theme helpers directly, override `--rfb-*` variables, or replace styling with their own CSS. Slots remain replaceable and do not own core semantics.
+
+## Testing
+
+Renderer tests cover built-in fields, accessibility, hidden-field semantics, validation, backend response mapping, normalized envelopes, slots, data attributes, theme variables, focus styles, and reduced-motion CSS.

@@ -28,6 +28,7 @@
     "@your-org/forms-adapters": "workspace:*",
     "@your-org/forms-core": "workspace:*",
     "@your-org/forms-react-renderer": "workspace:*",
+    "@your-org/forms-themes": "workspace:*",
     "@your-org/forms-validators": "workspace:*"
   },
   "peerDependencies": {

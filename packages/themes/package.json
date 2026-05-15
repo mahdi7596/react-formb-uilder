@@ -2,7 +2,7 @@
   "name": "@your-org/forms-themes",
   "version": "0.0.0",
   "private": true,
-  "description": "Optional starter theme package placeholder.",
+  "description": "Optional starter tokens, CSS variables, and default theme helpers for the form builder.",
   "type": "module",
   "sideEffects": false,
   "exports": {
@@ -15,6 +15,7 @@
     "build": "tsc -p tsconfig.build.json",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "lint": "eslint .",
+    "test": "vitest run src/index.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {},

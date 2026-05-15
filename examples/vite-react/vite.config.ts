@@ -9,6 +9,7 @@ export default defineConfig({
       "@your-org/forms-core": resolve(__dirname, "src/core-browser.ts"),
       "@your-org/forms-adapters": resolve(__dirname, "../../packages/adapters/src/index.ts"),
       "@your-org/forms-react-builder": resolve(__dirname, "../../packages/react-builder/src/index.ts"),
+      "@your-org/forms-themes": resolve(__dirname, "../../packages/themes/src/index.ts"),
       "@your-org/forms-validators": resolve(__dirname, "../../packages/validators/src/index.ts"),
       "@your-org/forms-react-renderer": resolve(__dirname, "../../packages/react-renderer/src/index.tsx")
     }

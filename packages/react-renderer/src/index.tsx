@@ -28,6 +28,7 @@ import {
   type ValidationRule
 } from "@your-org/forms-core";
 import type { AdapterResult, SubmitFormData } from "@your-org/forms-adapters";
+import { createRendererThemeStyles } from "@your-org/forms-themes";
 
 export interface RendererOption {
   id?: string;
@@ -203,15 +204,7 @@ export function createDefaultFieldRegistry(overrides: Partial<FieldRegistry> = {
 }
 
 export function createRendererStyles(): string {
-  return [
-    ".rfb-form{--rfb-field-gap:0.75rem;--rfb-border-color:#d0d7de;--rfb-error-color:#b42318;display:grid;gap:1rem;}",
-    ".rfb-field{display:grid;gap:0.35rem;}",
-    ".rfb-label{font-weight:600;}",
-    ".rfb-description{color:#57606a;font-size:0.925rem;}",
-    ".rfb-error{color:var(--rfb-error-color);font-size:0.925rem;}",
-    ".rfb-input{border:1px solid var(--rfb-border-color);border-radius:6px;padding:0.5rem 0.625rem;}",
-    ".rfb-navigation{display:flex;gap:0.5rem;}"
-  ].join("\n");
+  return createRendererThemeStyles();
 }
 
 export function FormRenderer(props: FormRendererProps): ReactNode {

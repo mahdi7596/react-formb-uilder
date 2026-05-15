@@ -134,7 +134,13 @@ describe("FormRenderer", () => {
     expect(screen.getByLabelText("Resume metadata")).toBeTruthy();
     expect(container.querySelector(".rfb-form")).toBeTruthy();
     expect(container.querySelector("[data-rfb-field-type='text']")).toBeTruthy();
-    expect(createRendererStyles()).toContain("--rfb-field-gap");
+    const rendererStyles = createRendererStyles();
+    expect(rendererStyles).toContain("--rfb-color-primary:#315CFF;");
+    expect(rendererStyles).toContain("--rfb-field-gap");
+    expect(rendererStyles).toContain(".rfb-field[data-rfb-invalid=\"true\"]");
+    expect(rendererStyles).toContain(".rfb-navigation");
+    expect(rendererStyles).toContain(":focus-visible");
+    expect(rendererStyles).toContain("prefers-reduced-motion: reduce");
     expect((await axe(container)).violations).toHaveLength(0);
   });
 

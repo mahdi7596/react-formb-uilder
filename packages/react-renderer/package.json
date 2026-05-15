@@ -20,7 +20,8 @@
   },
   "dependencies": {
     "@your-org/forms-adapters": "workspace:*",
-    "@your-org/forms-core": "workspace:*"
+    "@your-org/forms-core": "workspace:*",
+    "@your-org/forms-themes": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=18.2.0 || >=19.0.0"

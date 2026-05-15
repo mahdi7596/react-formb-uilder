@@ -29,6 +29,26 @@ test("saves the builder draft and shows the saved state", async ({ page }) => {
   await expect(page.getByText("Draft saved in the fake host adapter.")).toBeVisible();
 });
 
+test("renders themed builder and renderer surfaces with host overrides", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(page.locator(".rfb-builder")).toBeVisible();
+  await expect(page.locator(".form-panel .rfb-form")).toBeVisible();
+
+  await expect(page.locator(".builder-theme-override")).toHaveCSS("background-color", "rgb(246, 247, 251)");
+  await expect(page.locator(".form-panel .rfb-submit-button")).toHaveCSS("background-color", "rgb(8, 117, 104)");
+
+  const builderCanvasWidth = await page.locator(".builder-theme-override").evaluate((element) =>
+    getComputedStyle(element).getPropertyValue("--rfb-component-builder-canvas-max-width").trim()
+  );
+  const rendererPrimary = await page.locator(".host-theme-override").evaluate((element) =>
+    getComputedStyle(element).getPropertyValue("--rfb-color-primary").trim()
+  );
+
+  expect(builderCanvasWidth).toBe("820px");
+  expect(rendererPrimary).toBe("#087568");
+});
+
 test("recovers from a fake stale draft save conflict", async ({ page }) => {
   await page.goto("/");
 
@@ -133,4 +153,25 @@ test("renders the RTL example in a narrow viewport", async ({ page }) => {
   await expect(formPanel.getByRole("heading", { name: "ثبت نام رویداد" })).toBeVisible();
   await expect(page.locator(".form-panel")).toHaveAttribute("dir", "rtl");
   await expect(formPanel.getByRole("textbox", { name: "نام کامل" })).toBeVisible();
+  await expect(page.locator(".rfb-builder")).toBeVisible();
+  await expect(page.locator(".builder-theme-override")).toHaveCSS("overflow", "auto");
+});
+
+test("keeps themed focus visible and honors reduced-motion media", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+
+  const saveDraft = page.getByRole("button", { name: "Save draft" });
+  await saveDraft.focus();
+  await expect(saveDraft).toBeFocused();
+
+  const outlineStyle = await saveDraft.evaluate((element) => getComputedStyle(element).outlineStyle);
+  const outlineWidth = await saveDraft.evaluate((element) => getComputedStyle(element).outlineWidth);
+  const transitionDuration = await page.locator(".rfb-builder .rfb-node").first().evaluate((element) =>
+    getComputedStyle(element).transitionDuration
+  );
+
+  expect(outlineStyle).not.toBe("none");
+  expect(outlineWidth).not.toBe("0px");
+  expect(["0.01ms", "0.00001s", "1e-05s"]).toContain(transitionDuration);
 });

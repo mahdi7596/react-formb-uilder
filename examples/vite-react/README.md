@@ -20,6 +20,7 @@ Open the printed localhost URL. The app demonstrates:
 - hidden-field filtering shown in the normalized envelope panel
 - RTL rendering with Persian labels
 - conflict, auth, rate-limit, and server-error backend statuses
+- default theme package adoption with host-scoped CSS variable overrides
 
 ## Exercise The Builder Workflow
 
@@ -40,6 +41,12 @@ pnpm --filter @your-org/forms-example-vite-react test:e2e
 ```
 
 Playwright starts the Vite dev server and verifies the browser-visible builder persistence, publish, artifact, and renderer submission behavior.
+
+## Theme Usage
+
+The example imports `createDefaultThemeStyles` from `@your-org/forms-themes` and injects the shared renderer and builder CSS helpers once at the app shell. The builder and renderer packages still expose their own style helpers, but the example keeps package theme styling out of host CSS.
+
+Host-specific CSS stays in `src/styles.css`: page layout, debug panels, mode controls, and the scoped customization classes. `builder-theme-override` demonstrates a builder token override, and `host-theme-override` demonstrates renderer token overrides for primary color, focus color, and radius.
 
 ## Boundaries
 

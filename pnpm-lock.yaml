@@ -44,6 +44,9 @@ importers:
       '@your-org/forms-react-renderer':
         specifier: workspace:*
         version: link:../../packages/react-renderer
+      '@your-org/forms-themes':
+        specifier: workspace:*
+        version: link:../../packages/themes
       '@your-org/forms-validators':
         specifier: workspace:*
         version: link:../../packages/validators
@@ -101,6 +104,9 @@ importers:
       '@your-org/forms-react-renderer':
         specifier: workspace:*
         version: link:../react-renderer
+      '@your-org/forms-themes':
+        specifier: workspace:*
+        version: link:../themes
       '@your-org/forms-validators':
         specifier: workspace:*
         version: link:../validators
@@ -150,6 +156,9 @@ importers:
       '@your-org/forms-core':
         specifier: workspace:*
         version: link:../core
+      '@your-org/forms-themes':
+        specifier: workspace:*
+        version: link:../themes
     devDependencies:
       '@testing-library/jest-dom':
         specifier: ^6.9.1
