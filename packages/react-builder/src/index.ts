@@ -669,3 +669,4 @@ function hasErrors(diagnostics: BuilderCommandDiagnostic[]): boolean {
 }
 
 export * from "./ui.js";
+export * from "./dnd.js";

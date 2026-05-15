@@ -1,4 +1,19 @@
 import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  pointerWithin,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragOverEvent,
+  type DragStartEvent
+} from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
+import {
   FormRenderer,
   createRendererStyles,
   type RendererSchema
@@ -35,6 +50,17 @@ import {
   type BuilderSchema,
   type BuilderValidationRule
 } from "./index.js";
+import {
+  CANVAS_ROOT_DROP_ID,
+  canvasNodeDragId,
+  canvasNodeDropId,
+  paletteDragId,
+  resolveDndIntent,
+  resolveDropTarget,
+  rootEditableNodes as getRootEditableNodes,
+  type BuilderDndIntent,
+  type BuilderDragPayload
+} from "./dnd.js";
 
 export interface BuilderWorkspaceProps {
   schema: BuilderSchema;
@@ -68,56 +94,260 @@ export function BuilderWorkspace(props: BuilderWorkspaceProps): ReactNode {
   const selectedNode = state.selectedNodeId ? findNode(state.schema, state.selectedNodeId) : null;
   const diagnostics = state.commandStatus.diagnostics;
   const isPreview = state.canvasMode === "preview";
+  const [announcement, setAnnouncement] = useState("Drag and keyboard movement ready.");
+  const [activeDrag, setActiveDrag] = useState<BuilderDragPayload | null>(null);
+  const [overDropId, setOverDropId] = useState<string | null>(null);
+  const [dropFeedback, setDropFeedback] = useState<{ status: "idle" | "valid" | "invalid"; message: string }>({
+    status: "idle",
+    message: ""
+  });
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor)
+  );
+
+  const announce = useCallback((message: string) => {
+    setAnnouncement(message);
+  }, []);
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const payload = event.active.data.current?.payload as BuilderDragPayload | undefined;
+    if (!payload) {
+      return;
+    }
+    setActiveDrag(payload);
+    setDropFeedback({ status: "idle", message: "" });
+    actions.setDragState({
+      status: "dragging",
+      ...(payload.type === "canvas-node" ? { activeNodeId: payload.nodeId } : {})
+    });
+    announce(`${payload.label} drag started. Move to a canvas drop target.`);
+  }, [actions, announce]);
+
+  const handleDragOver = useCallback((event: DragOverEvent) => {
+    const id = event.over?.id ? String(event.over.id) : null;
+    const payload = (event.active.data.current?.payload as BuilderDragPayload | undefined) ?? activeDrag;
+    setOverDropId(id);
+    if (!payload || !id) {
+      setDropFeedback({ status: "idle", message: "" });
+      return;
+    }
+    const target = resolveDropTarget(id);
+    const intent = resolveDndIntent(state.schema, payload, target);
+    if (intent.kind === "invalid") {
+      actions.setDragState({
+        status: "invalid",
+        ...(payload.type === "canvas-node" ? { activeNodeId: payload.nodeId } : {})
+      });
+      setDropFeedback({ status: "invalid", message: intent.announcement });
+      announce(intent.announcement);
+      return;
+    }
+    actions.setDragState({
+      status: "dragging",
+      ...(target.type === "canvas-node" ? { overNodeId: target.nodeId } : {}),
+      ...(payload.type === "canvas-node" ? { activeNodeId: payload.nodeId } : {})
+    });
+    setDropFeedback({ status: "valid", message: "Valid drop target." });
+  }, [actions, activeDrag, announce, state.schema]);
+
+  const resetDragState = useCallback(() => {
+    setActiveDrag(null);
+    setOverDropId(null);
+    actions.setDragState({ status: "idle" });
+  }, [actions]);
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const payload = event.active.data.current?.payload as BuilderDragPayload | undefined;
+    const target = resolveDropTarget(event.over?.id ? String(event.over.id) : null);
+    const intent = resolveDndIntent(state.schema, payload, target);
+    const result = actions.applyDndIntent(intent);
+    const status = intent.kind === "invalid" ? "invalid" : "idle";
+    setDropFeedback({ status, message: intent.announcement });
+    announce(intent.announcement);
+    resetDragState();
+    if (result?.changed) {
+      actions.setDragState({ status: "dropping" });
+      actions.setDragState({ status: "idle" });
+    }
+  }, [actions, announce, resetDragState, state.schema]);
+
+  const handleDragCancel = useCallback(() => {
+    const label = activeDrag?.label ?? "Item";
+    setDropFeedback({ status: "idle", message: `${label} drag cancelled.` });
+    announce(`${label} drag cancelled.`);
+    resetDragState();
+  }, [activeDrag, announce, resetDragState]);
 
   return (
-    <div
-      className={["rfb-builder", props.className].filter(Boolean).join(" ")}
-      dir={direction}
-      data-preview-mode={isPreview ? "true" : "false"}
-      data-active-panel={state.activePanel}
+    <DndContext
+      sensors={sensors}
+      collisionDetection={pointerWithin}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
     >
-      <BuilderStyles />
-      <CommandBar
-        state={state}
-        diagnostics={diagnostics}
-        onUndo={actions.undo}
-        onRedo={actions.redo}
-        onTogglePreview={() => actions.setCanvasMode(isPreview ? "edit" : "preview")}
-      />
-      <div className="rfb-builder-layout">
-        <Palette
-          schema={state.schema}
-          onAdd={(item) => actions.addFromPalette(item)}
-        />
-        <main className="rfb-canvas-region" role="region" aria-label="Form canvas">
-          {isPreview ? (
-            <PreviewFrame schema={state.schema} />
-          ) : (
-            <Canvas
-              schema={state.schema}
-              selectedNodeId={state.selectedNodeId}
-              diagnostics={diagnostics}
-              onSelect={actions.selectNode}
-              onEditLabel={actions.updateLabel}
-              onDuplicate={actions.duplicateNode}
-              onDelete={actions.deleteNode}
-              onMove={actions.moveNode}
-            />
-          )}
-        </main>
-        <Inspector
+      <div
+        className={["rfb-builder", props.className].filter(Boolean).join(" ")}
+        dir={direction}
+        data-preview-mode={isPreview ? "true" : "false"}
+        data-active-panel={state.activePanel}
+        data-drag-status={state.dragState.status}
+      >
+        <BuilderStyles />
+        <LiveRegion message={announcement} />
+        <CommandBar
           state={state}
-          selectedNode={selectedNode}
-          onSelectPanel={actions.setActivePanel}
-          onUpdateLabel={actions.updateLabel}
-          onUpdateDescription={actions.updateDescription}
-          onUpdatePlaceholder={actions.updatePlaceholder}
-          onUpdateOptions={actions.updateOptions}
-          onUpdateRequired={actions.updateRequired}
-          onUpdateCondition={actions.updateCondition}
-          onUpdateSubmittedName={actions.updateSubmittedName}
+          diagnostics={diagnostics}
+          onUndo={() => { actions.undo(); announce("Undo complete."); }}
+          onRedo={() => { actions.redo(); announce("Redo complete."); }}
+          onTogglePreview={() => actions.setCanvasMode(isPreview ? "edit" : "preview")}
         />
+        <div className="rfb-builder-layout">
+          <Palette
+            schema={state.schema}
+            onAdd={(item) => {
+              const result = actions.addFromPalette(item);
+              announce(result.changed ? `${item.label} inserted.` : `${item.label} was not inserted.`);
+            }}
+          />
+          <main className="rfb-canvas-region" role="region" aria-label="Form canvas">
+            {dropFeedback.message ? (
+              <div
+                className="rfb-drop-feedback"
+                data-status={dropFeedback.status}
+                role={dropFeedback.status === "invalid" ? "alert" : "status"}
+              >
+                {dropFeedback.message}
+              </div>
+            ) : null}
+            {isPreview ? (
+              <PreviewFrame schema={state.schema} />
+            ) : (
+              <Canvas
+                schema={state.schema}
+                selectedNodeId={state.selectedNodeId}
+                diagnostics={diagnostics}
+                dragState={state.dragState}
+                overDropId={overDropId}
+                onSelect={actions.selectNode}
+                onEditLabel={actions.updateLabel}
+                onDuplicate={actions.duplicateNode}
+                onDelete={actions.deleteNode}
+                onMove={(nodeId, direction) => {
+                  const result = actions.moveNode(nodeId, direction);
+                  const label = readNode(state.schema, nodeId)?.label ?? "Field";
+                  announce(result.changed ? `${label} moved ${direction}.` : `${label} cannot move ${direction}.`);
+                }}
+              />
+            )}
+          </main>
+          <Inspector
+            state={state}
+            selectedNode={selectedNode}
+            onSelectPanel={actions.setActivePanel}
+            onUpdateLabel={actions.updateLabel}
+            onUpdateDescription={actions.updateDescription}
+            onUpdatePlaceholder={actions.updatePlaceholder}
+            onUpdateOptions={actions.updateOptions}
+            onUpdateRequired={actions.updateRequired}
+            onUpdateCondition={actions.updateCondition}
+            onUpdateSubmittedName={actions.updateSubmittedName}
+          />
+        </div>
+        <DragOverlay>
+          {activeDrag ? <DragOverlayCard label={activeDrag.label} type={activeDrag.type} /> : null}
+        </DragOverlay>
       </div>
+    </DndContext>
+  );
+}
+
+function LiveRegion(props: { message: string }): ReactNode {
+  return (
+    <div className="rfb-sr-only" role="status" aria-live="polite" aria-atomic="true">
+      {props.message}
+    </div>
+  );
+}
+
+function DragOverlayCard(props: { label: string; type: string }): ReactNode {
+  return (
+    <div className="rfb-drag-overlay" role="presentation">
+      <span>{props.label}</span>
+      <small>{props.type === "palette-template" ? "New field" : "Move field"}</small>
+    </div>
+  );
+}
+
+function PaletteDragHandle(props: { item: PaletteItemDefinition }): ReactNode {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: paletteDragId(props.item.fieldType),
+    data: {
+      payload: {
+        type: "palette-template",
+        fieldType: props.item.fieldType,
+        label: props.item.label,
+        createNode: props.item.createNode
+      } satisfies BuilderDragPayload
+    }
+  });
+  return (
+    <button
+      ref={setNodeRef}
+      type="button"
+      className="rfb-drag-handle"
+      aria-label={`Drag ${props.item.label}`}
+      data-dragging={isDragging ? "true" : "false"}
+      style={{ transform: CSS.Translate.toString(transform) }}
+      {...attributes}
+      {...listeners}
+    >
+      ::
+    </button>
+  );
+}
+
+function CanvasDragHandle(props: { node: BuilderNode }): ReactNode {
+  const label = readNodeLabel(props.node);
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: canvasNodeDragId(props.node.id),
+    data: {
+      payload: {
+        type: "canvas-node",
+        nodeId: props.node.id,
+        label
+      } satisfies BuilderDragPayload
+    }
+  });
+  return (
+    <button
+      ref={setNodeRef}
+      type="button"
+      className="rfb-drag-handle"
+      aria-label={`Drag ${label}`}
+      data-dragging={isDragging ? "true" : "false"}
+      style={{ transform: CSS.Translate.toString(transform) }}
+      {...attributes}
+      {...listeners}
+    >
+      ::
+    </button>
+  );
+}
+
+function CanvasDropZone(props: { id: string; label: string; active: boolean }): ReactNode {
+  const { isOver, setNodeRef } = useDroppable({ id: props.id });
+  return (
+    <div
+      ref={setNodeRef}
+      className="rfb-drop-zone"
+      data-active={props.active || isOver ? "true" : "false"}
+      aria-label={props.label}
+      role="separator"
+    >
+      <span>{props.label}</span>
     </div>
   );
 }
@@ -160,7 +390,8 @@ export function createBuilderStyles(): string {
 .rfb-input,.rfb-textarea,.rfb-select{inline-size:100%;border:1px solid var(--fb-border);border-radius:var(--fb-radius);background:var(--fb-surface);color:var(--fb-on-surface);font:400 14px/20px inherit;padding:8px 10px;min-block-size:38px;}
 .rfb-textarea{resize:vertical;min-block-size:76px;}
 .rfb-input[dir="ltr"],.rfb-code{direction:ltr;text-align:left;font-family:"Roboto Mono","SFMono-Regular",Consolas,monospace;}
-.rfb-button:focus-visible,.rfb-icon-button:focus-visible,.rfb-input:focus-visible,.rfb-textarea:focus-visible,.rfb-select:focus-visible,.rfb-tab:focus-visible,.rfb-node:focus-visible{outline:3px solid var(--fb-focus);outline-offset:2px;}
+.rfb-button:focus-visible,.rfb-icon-button:focus-visible,.rfb-input:focus-visible,.rfb-textarea:focus-visible,.rfb-select:focus-visible,.rfb-tab:focus-visible,.rfb-node:focus-visible,.rfb-drag-handle:focus-visible{outline:3px solid var(--fb-focus);outline-offset:2px;}
+.rfb-sr-only{position:absolute;inline-size:1px;block-size:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 .rfb-empty,.rfb-alert{border:1px solid var(--fb-border);border-radius:var(--fb-radius);background:var(--fb-surface-muted);padding:24px;color:var(--fb-muted);display:grid;gap:8px;}
 .rfb-alert{padding:12px 14px;background:var(--fb-primary-container);color:var(--fb-on-primary-container);}
 .rfb-alert[data-severity="error"]{background:#FFF2F0;color:var(--fb-danger);border-color:#FFD6D0;}
@@ -170,17 +401,30 @@ export function createBuilderStyles(): string {
 .rfb-palette-search{margin-block-end:16px;}
 .rfb-palette-group{display:grid;gap:8px;margin-block-end:18px;}
 .rfb-palette-group h3{font-size:12px;line-height:16px;margin:0;color:var(--fb-muted);text-transform:uppercase;}
-.rfb-palette-item{inline-size:100%;border:1px solid var(--fb-border);border-radius:var(--fb-radius);background:var(--fb-surface);padding:10px;text-align:start;display:grid;grid-template-columns:32px 1fr;gap:10px;cursor:pointer;}
+.rfb-palette-item{inline-size:100%;border:1px solid var(--fb-border);border-radius:var(--fb-radius);background:var(--fb-surface);padding:10px;text-align:start;display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:10px;align-items:start;}
 .rfb-palette-item:hover,.rfb-node:hover{border-color:var(--fb-border-strong);box-shadow:var(--fb-shadow);}
 .rfb-palette-icon{block-size:32px;inline-size:32px;border-radius:var(--fb-radius-sm);background:var(--fb-primary-container);color:var(--fb-on-primary-container);display:grid;place-items:center;font-weight:800;}
 .rfb-palette-copy{display:grid;gap:2px;min-inline-size:0;}
 .rfb-palette-copy strong,.rfb-node-label{overflow-wrap:anywhere;}
 .rfb-palette-copy span,.rfb-node-meta,.rfb-help{color:var(--fb-muted);font-size:12px;line-height:16px;}
 .rfb-node{border:1px solid var(--fb-border);border-radius:var(--fb-radius);background:var(--fb-surface);padding:14px;display:grid;gap:10px;cursor:pointer;}
+.rfb-node[data-dragging="true"]{opacity:.56;}
+.rfb-node[data-drop-active="true"]{border-color:var(--fb-primary);background:var(--fb-primary-container);}
 .rfb-node[data-selected="true"]{border-color:var(--fb-primary);box-shadow:0 0 0 3px var(--fb-primary-container);}
-.rfb-node-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+.rfb-node-header{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:flex-start;gap:12px;}
 .rfb-node-title{display:grid;gap:3px;min-inline-size:0;}
 .rfb-node-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+.rfb-drag-handle{border:1px solid var(--fb-border);border-radius:var(--fb-radius-sm);background:var(--fb-surface-muted);color:var(--fb-muted);font:800 14px/18px inherit;inline-size:32px;min-block-size:32px;display:grid;place-items:center;cursor:grab;touch-action:none;}
+.rfb-drag-handle[data-dragging="true"]{cursor:grabbing;background:var(--fb-primary-container);color:var(--fb-on-primary-container);border-color:var(--fb-primary);}
+.rfb-drop-zone{border:1px dashed transparent;border-radius:var(--fb-radius-sm);min-block-size:30px;display:grid;place-items:center;color:transparent;font-size:12px;line-height:16px;}
+.rfb-drop-zone[data-active="true"]{border-color:var(--fb-primary);background:var(--fb-primary-container);color:var(--fb-on-primary-container);}
+.rfb-drop-zone span{pointer-events:none;}
+.rfb-drop-feedback{inline-size:min(760px,100%);margin:0 auto 12px;border:1px solid var(--fb-border);border-radius:var(--fb-radius);background:var(--fb-surface);padding:10px 12px;color:var(--fb-muted);font-size:13px;line-height:18px;}
+.rfb-drop-feedback[data-status="valid"]{border-color:var(--fb-primary);background:var(--fb-primary-container);color:var(--fb-on-primary-container);}
+.rfb-drop-feedback[data-status="invalid"]{border-color:#FFD6D0;background:#FFF2F0;color:var(--fb-danger);}
+.rfb-drag-overlay{border:1px solid var(--fb-primary);border-radius:var(--fb-radius);background:var(--fb-surface);box-shadow:0 16px 42px rgba(15,23,42,.18);padding:10px 12px;min-inline-size:180px;display:grid;gap:2px;}
+.rfb-drag-overlay span{font-weight:800;overflow-wrap:anywhere;}
+.rfb-drag-overlay small{color:var(--fb-muted);}
 .rfb-field-preview{border:1px dashed var(--fb-border);border-radius:var(--fb-radius-sm);padding:10px;color:var(--fb-muted);background:var(--fb-surface-muted);}
 .rfb-inspector-header{padding:16px;border-block-end:1px solid var(--fb-border);}
 .rfb-tabs{display:flex;gap:0;border-block-end:1px solid var(--fb-border);overflow:auto;}
@@ -193,7 +437,7 @@ export function createBuilderStyles(): string {
 .rfb-diagnostics{display:grid;gap:8px;}
 @media (max-width: 1024px){.rfb-builder-layout{grid-template-columns:260px minmax(320px,1fr);grid-template-areas:"palette canvas";}.rfb-inspector{position:fixed;inset-block:56px 0;inset-inline-start:0;inline-size:min(360px,88vw);z-index:10;box-shadow:0 12px 32px rgba(15,23,42,.14);}.rfb-builder[data-active-panel="preview"] .rfb-inspector{display:none;}}
 @media (max-width: 720px){.rfb-command-bar{block-size:auto;min-block-size:56px;align-items:flex-start;flex-direction:column;padding-block:12px}.rfb-command-actions{inline-size:100%;overflow:auto}.rfb-builder-layout{display:flex;flex-direction:column;block-size:auto;min-block-size:0}.rfb-palette{border-inline-start:0;border-block-end:1px solid var(--fb-border);max-block-size:260px}.rfb-canvas-region{padding:16px}.rfb-inspector{position:static;inline-size:auto;box-shadow:none;border-inline-end:0;border-block-start:1px solid var(--fb-border)}.rfb-preview-frame{padding:16px}.rfb-builder{min-height:100vh;overflow:auto}}
-@media (prefers-reduced-motion: no-preference){.rfb-button,.rfb-icon-button,.rfb-palette-item,.rfb-node,.rfb-tab{transition:border-color .16s ease,box-shadow .16s ease,background-color .16s ease,color .16s ease;}}
+@media (prefers-reduced-motion: no-preference){.rfb-button,.rfb-icon-button,.rfb-palette-item,.rfb-node,.rfb-tab,.rfb-drop-zone,.rfb-drag-handle{transition:border-color .16s ease,box-shadow .16s ease,background-color .16s ease,color .16s ease,opacity .16s ease;}}
 `;
 }
 
@@ -311,19 +555,20 @@ function Palette(props: { schema: BuilderSchema; onAdd: (item: PaletteItemDefini
         <section className="rfb-palette-group" key={group.key} aria-label={group.key}>
           <h3>{group.key}</h3>
           {group.items.map((item) => (
-            <button
+            <div
               className="rfb-palette-item"
-              type="button"
               key={item.fieldType}
-              onClick={() => props.onAdd(item)}
-              aria-label={`Add ${item.label}`}
             >
               <span className="rfb-palette-icon" aria-hidden="true">{item.icon}</span>
               <span className="rfb-palette-copy">
                 <strong>{item.label}</strong>
                 <span>{item.description}</span>
               </span>
-            </button>
+              <span className="rfb-inline">
+                <PaletteDragHandle item={item} />
+                <IconButton type="button" onClick={() => props.onAdd(item)} aria-label={`Add ${item.label}`}>+</IconButton>
+              </span>
+            </div>
           ))}
         </section>
       )) : (
@@ -342,6 +587,8 @@ function Canvas(props: {
   schema: BuilderSchema;
   selectedNodeId: string | null;
   diagnostics: BuilderCommandDiagnostic[];
+  dragState: BuilderEditorState["dragState"];
+  overDropId: string | null;
   onSelect: (nodeId: string | null) => void;
   onEditLabel: (nodeId: string, label: string) => void;
   onDuplicate: (nodeId: string) => void;
@@ -352,29 +599,39 @@ function Canvas(props: {
   if (nodes.length === 0) {
     return (
       <div className="rfb-canvas">
+        <CanvasDropZone id={CANVAS_ROOT_DROP_ID} label="Drop first field here" active={props.overDropId === CANVAS_ROOT_DROP_ID} />
         <EmptyState
           title="Start with a component"
-          description="Use the component palette to add the first field to this form."
+          description="Use the component palette to add or drag the first field to this form."
         />
       </div>
     );
   }
   return (
     <div className="rfb-canvas" aria-label="Editable form structure">
-      {nodes.map((node, index) => (
-        <CanvasNode
-          key={node.id}
-          node={node}
-          index={index}
-          selected={props.selectedNodeId === node.id}
-          diagnostics={props.diagnostics.filter((diagnostic) => diagnostic.nodeId === node.id)}
-          onSelect={props.onSelect}
-          onEditLabel={props.onEditLabel}
-          onDuplicate={props.onDuplicate}
-          onDelete={props.onDelete}
-          onMove={props.onMove}
-        />
-      ))}
+      {nodes.map((node, index) => {
+        const afterId = canvasNodeDropId(node.id, "after");
+        return (
+          <div className="rfb-canvas-slot" key={node.id}>
+            <CanvasNode
+              node={node}
+              index={index}
+              selected={props.selectedNodeId === node.id}
+              dragging={props.dragState.activeNodeId === node.id && props.dragState.status === "dragging"}
+              dropActive={props.overDropId === canvasNodeDropId(node.id, "before")}
+              diagnostics={props.diagnostics.filter((diagnostic) => diagnostic.nodeId === node.id)}
+              onSelect={props.onSelect}
+              onEditLabel={props.onEditLabel}
+              onDuplicate={props.onDuplicate}
+              onDelete={props.onDelete}
+              onMove={props.onMove}
+            />
+            {index === nodes.length - 1 ? (
+              <CanvasDropZone id={afterId} label={`Drop after ${readNodeLabel(node)}`} active={props.overDropId === afterId} />
+            ) : null}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -383,6 +640,8 @@ function CanvasNode(props: {
   node: BuilderNode;
   index: number;
   selected: boolean;
+  dragging: boolean;
+  dropActive: boolean;
   diagnostics: BuilderCommandDiagnostic[];
   onSelect: (nodeId: string) => void;
   onEditLabel: (nodeId: string, label: string) => void;
@@ -392,6 +651,7 @@ function CanvasNode(props: {
 }): ReactNode {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(readNodeLabel(props.node));
+  const { setNodeRef, isOver } = useDroppable({ id: canvasNodeDropId(props.node.id, "before") });
 
   const commit = () => {
     const next = draft.trim();
@@ -403,9 +663,12 @@ function CanvasNode(props: {
 
   return (
     <article
+      ref={setNodeRef}
       className="rfb-node"
       tabIndex={0}
       data-selected={props.selected ? "true" : "false"}
+      data-dragging={props.dragging ? "true" : "false"}
+      data-drop-active={props.dropActive || isOver ? "true" : "false"}
       aria-label={`Field ${readNodeLabel(props.node)}`}
       onClick={() => props.onSelect(props.node.id)}
       onKeyDown={(event) => {
@@ -415,6 +678,7 @@ function CanvasNode(props: {
       }}
     >
       <div className="rfb-node-header">
+        <CanvasDragHandle node={props.node} />
         <div className="rfb-node-title">
           {isEditing ? (
             <form
@@ -613,6 +877,7 @@ function useEditorStoreController(store: BuilderEditorStore): {
     setActivePanel: (panel: BuilderActivePanel) => void;
     setCanvasMode: (mode: "edit" | "preview" | "logic") => void;
     addFromPalette: (item: PaletteItemDefinition) => BuilderCommandResult;
+    applyDndIntent: (intent: BuilderDndIntent) => BuilderCommandResult | null;
     updateLabel: (nodeId: string, label: string) => BuilderCommandResult;
     updateDescription: (nodeId: string, description: string) => BuilderCommandResult;
     updatePlaceholder: (nodeId: string, placeholder: string) => BuilderCommandResult;
@@ -623,6 +888,7 @@ function useEditorStoreController(store: BuilderEditorStore): {
     duplicateNode: (nodeId: string) => BuilderCommandResult;
     deleteNode: (nodeId: string) => BuilderCommandResult;
     moveNode: (nodeId: string, direction: "up" | "down") => BuilderCommandResult;
+    setDragState: (dragState: BuilderEditorState["dragState"]) => void;
     undo: () => void;
     redo: () => void;
   };
@@ -661,6 +927,29 @@ function useEditorStoreController(store: BuilderEditorStore): {
       }
       return result;
     }),
+    applyDndIntent: (intent: BuilderDndIntent) => {
+      if (intent.kind === "addNode") {
+        return run(() => {
+          const result = store.executeCommand("addNode", (schema) => addNode(schema, intent.input));
+          if (result.changed) {
+            store.selectNode(intent.insertedNodeId);
+            store.setActivePanel("content");
+          }
+          return result;
+        });
+      }
+      if (intent.kind === "moveNode") {
+        return run(() => {
+          const result = store.executeCommand("moveNode", (schema) => moveNode(schema, intent.input));
+          if (result.changed) {
+            store.selectNode(intent.input.nodeId);
+          }
+          return result;
+        });
+      }
+      refresh();
+      return null;
+    },
     updateLabel: (nodeId: string, label: string) => run(() =>
       store.executeCommand("updateLabel", (schema) => updateLabel(schema, { nodeId, label }))
     ),
@@ -694,6 +983,10 @@ function useEditorStoreController(store: BuilderEditorStore): {
       const position = direction === "up" ? currentIndex - 1 : currentIndex + 1;
       return store.executeCommand("moveNode", (currentSchema) => moveNode(currentSchema, { nodeId, position }));
     }),
+    setDragState: (dragState: BuilderEditorState["dragState"]) => {
+      store.setDragState(dragState);
+      refresh();
+    },
     undo: () => {
       store.undo();
       refresh();

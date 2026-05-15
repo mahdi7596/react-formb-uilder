@@ -140,6 +140,28 @@ describe("builder palette and canvas", () => {
     expect(screen.getByText(/email input preview/i)).toBeInTheDocument();
     expect(screen.getByText("Email", { selector: "span.rfb-help" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Undo" })).not.toBeDisabled();
+    expect(screen.getByText("Email inserted.")).toBeInTheDocument();
+  });
+
+  it("renders drag handles, drop zones, and command-backed keyboard movement feedback", async () => {
+    const user = userEvent.setup();
+    render(<BuilderWorkspace schema={populatedSchema} />);
+
+    expect(screen.getAllByRole("button", { name: "Drag Email" }).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole("article", { name: "Field Email" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Drop after Plan")).toBeInTheDocument();
+
+    await user.click(screen.getAllByRole("button", { name: "Move field up" })[0] as HTMLElement);
+    expect(screen.getByText("Email cannot move up.")).toBeInTheDocument();
+
+    await user.click(screen.getAllByRole("button", { name: "Move field down" })[0] as HTMLElement);
+    expect(screen.getByText("Email moved down.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Undo" })).not.toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: "Undo" }));
+    expect(screen.getByText("Undo complete.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Redo" }));
+    expect(screen.getByText("Redo complete.")).toBeInTheDocument();
   });
 
   it("selects nodes, edits inline labels, and runs quick actions with diagnostics", async () => {
