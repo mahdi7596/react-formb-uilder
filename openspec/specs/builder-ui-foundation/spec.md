@@ -35,7 +35,7 @@ The React builder package SHALL provide reusable builder UI primitives for the c
 - **THEN** they reuse package-owned field chrome primitives rather than duplicating markup in each field block
 
 ### Requirement: Searchable component palette
-The React builder package SHALL provide a searchable grouped component palette for adding MVP field nodes through click-add behavior.
+The React builder package SHALL provide a searchable grouped component palette for adding MVP field nodes through click-add behavior and accessible drag insertion.
 
 #### Scenario: Palette groups field types
 - **WHEN** the palette is rendered
@@ -49,12 +49,16 @@ The React builder package SHALL provide a searchable grouped component palette f
 - **WHEN** a creator activates a palette item
 - **THEN** the builder inserts a matching node by executing the editor store's command path and selects the created node when insertion succeeds
 
+#### Scenario: Palette drag inserts through commands
+- **WHEN** a creator drags a palette item to a valid canvas drop target
+- **THEN** the builder inserts a matching node by executing the editor store's command path and selects the created node when insertion succeeds
+
 #### Scenario: Empty palette search is recoverable
 - **WHEN** a palette search has no matching components
 - **THEN** the palette shows a useful empty state and a clear way to recover without changing the schema
 
 ### Requirement: Canvas authoring surface
-The React builder package SHALL provide a canvas authoring surface that renders MVP schema nodes, empty states, selection state, quick actions, and inline label editing.
+The React builder package SHALL provide a canvas authoring surface that renders MVP schema nodes, empty states, selection state, drag state, quick actions, and inline label editing.
 
 #### Scenario: Canvas renders schema nodes
 - **WHEN** the current builder schema contains MVP field nodes
@@ -75,6 +79,14 @@ The React builder package SHALL provide a canvas authoring surface that renders 
 #### Scenario: Quick actions use commands
 - **WHEN** a creator duplicates, deletes, or moves a node through canvas quick actions
 - **THEN** the action executes the corresponding builder command and surfaces command diagnostics when the command warns or fails
+
+#### Scenario: Drag reorder uses commands
+- **WHEN** a creator reorders canvas nodes by drag-and-drop
+- **THEN** the reorder executes the corresponding builder move command, updates selection consistently, and surfaces command diagnostics when the command warns or fails
+
+#### Scenario: Canvas shows drag and drop states
+- **WHEN** a creator drags over the canvas or over a node
+- **THEN** the canvas shows stable dragging, dropping, valid-drop, and invalid-drop states without overlapping text or resizing unrelated controls
 
 ### Requirement: Inspector editing
 The React builder package SHALL provide inspector tabs for content, validation, logic, accessibility, and data contract settings, with schema-changing edits routed through builder commands.
@@ -115,7 +127,7 @@ The React builder package SHALL provide a preview mode that renders the current 
 - **THEN** the previous builder selection and editable canvas state are restored where possible
 
 ### Requirement: Responsive builder behavior
-The React builder package SHALL provide responsive behavior for desktop, tablet, and mobile builder viewports.
+The React builder package SHALL provide responsive behavior for desktop, tablet, and mobile builder viewports, including accessible alternatives when pointer drag is not ergonomic.
 
 #### Scenario: Desktop uses three-panel layout
 - **WHEN** the viewport is wide enough for desktop editing
@@ -129,8 +141,12 @@ The React builder package SHALL provide responsive behavior for desktop, tablet,
 - **WHEN** the viewport is mobile-sized
 - **THEN** the builder avoids an unusable squeezed three-panel layout and provides preview-oriented or quick-edit access to core actions
 
+#### Scenario: Narrow layouts keep keyboard movement available
+- **WHEN** pointer drag is difficult because of viewport size or input mode
+- **THEN** the builder still exposes keyboard-accessible insertion or movement controls for supported MVP workflows
+
 #### Scenario: Text does not overlap or clip
-- **WHEN** builder labels, buttons, tabs, paths, or diagnostics contain long text
+- **WHEN** builder labels, buttons, tabs, paths, diagnostics, drag overlays, or drop indicators contain long text
 - **THEN** text wraps, truncates with accessible disclosure, or uses stable sizing so controls do not overlap incoherently across supported viewports
 
 ### Requirement: Builder UI verification
