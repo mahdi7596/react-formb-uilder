@@ -131,6 +131,12 @@ export interface ThemeCssOptions {
   includeCompatibilityAliases?: boolean;
 }
 
+export interface IranYekanFontOptions {
+  fontFamily?: string;
+  assetBasePath?: string;
+  selector?: string;
+}
+
 export type ThemeVariableName = `--rfb-${string}`;
 export type ThemeVariableEntries = ReadonlyArray<readonly [ThemeVariableName, string]>;
 
@@ -343,6 +349,17 @@ export function createFocusThemeStyles(): string {
 
 export function createReducedMotionStyles(): string {
   return reducedMotionCss;
+}
+
+export function createIranYekanFontFace(options: IranYekanFontOptions = {}): string {
+  const family = options.fontFamily ?? "IRANYekanXFaNum";
+  const basePath = (options.assetBasePath ?? "/assets/fonts/iranyekan").replace(/\/$/, "");
+  const selector = options.selector ?? ":where(.rfb-theme, .rfb-form, .rfb-builder)";
+  return [
+    `@font-face{font-family:"${family}";src:url("${basePath}/IRANYekanXFaNum-Regular.woff2") format("woff2"),url("${basePath}/IRANYekanXFaNum-Regular.woff") format("woff");font-weight:400;font-style:normal;font-display:swap;}`,
+    `@font-face{font-family:"${family}";src:url("${basePath}/IRANYekanXFaNum-Bold.woff2") format("woff2"),url("${basePath}/IRANYekanXFaNum-Bold.woff") format("woff");font-weight:700;font-style:normal;font-display:swap;}`,
+    `${selector}{--rfb-font-rtl:"${family}",Vazirmatn,Noto Sans Arabic,Tahoma,system-ui,sans-serif;}`
+  ].join("\n");
 }
 
 const compatibilityVariableEntries = [

@@ -6,6 +6,7 @@ import {
   createBuilderThemeStyles,
   createDefaultThemeStyles,
   createFocusThemeStyles,
+  createIranYekanFontFace,
   createReducedMotionStyles,
   createRendererThemeStyles,
   createThemeVariables,
@@ -65,6 +66,16 @@ describe("@your-org/forms-themes contracts", () => {
     expect(combined).toContain(".rfb-builder");
     expect(focus).toContain(":focus-visible");
     expect(reducedMotion).toContain("prefers-reduced-motion: reduce");
+  });
+
+  it("generates optional IranYekan font-face CSS without forcing default themes", () => {
+    const css = createIranYekanFontFace({ assetBasePath: "/theme-assets/iranyekan" });
+
+    expect(css).toContain("@font-face");
+    expect(css).toContain("IRANYekanXFaNum-Regular.woff2");
+    expect(css).toContain("IRANYekanXFaNum-Bold.woff2");
+    expect(css).toContain("--rfb-font-rtl:\"IRANYekanXFaNum\"");
+    expect(createDefaultThemeStyles()).not.toContain("IRANYekanXFaNum-Regular.woff2");
   });
 
   it("keeps core independent from themes, CSS, React, and design system libraries", () => {

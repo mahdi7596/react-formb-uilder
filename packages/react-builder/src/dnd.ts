@@ -187,7 +187,11 @@ export function createCanvasMoveIntent(
 
 export function rootEditableNodes(schema: BuilderSchema): BuilderNode[] {
   const childIds = new Set(schema.nodes.flatMap((node) => node.children ?? []));
-  return schema.nodes.filter((node) => !childIds.has(node.id) && (node.type === "field" || node.type === "hidden"));
+  return schema.nodes.filter((node) => !childIds.has(node.id) && isEditableCanvasNode(node));
+}
+
+function isEditableCanvasNode(node: BuilderNode): boolean {
+  return node.type === "field" || node.type === "hidden" || node.type === "content" || node.type === "section" || node.type === "step" || node.type === "ending";
 }
 
 function positionForCanvasTarget(

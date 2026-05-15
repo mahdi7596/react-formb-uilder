@@ -41,26 +41,61 @@ code {
   font-size: 0.95em;
 }
 
-.example-shell {
+.example-shell,
+.builder-shell {
   min-height: 100vh;
   padding: 32px;
 }
 
-.example-header {
+.example-header,
+.builder-product-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
   margin: 0 auto 24px;
   max-width: 1180px;
+  align-items: flex-start;
 }
 
-.example-header h1 {
+.example-header h1,
+.builder-product-header h1 {
   margin: 4px 0 10px;
   font-size: 2rem;
   line-height: 1.1;
 }
 
-.example-header p {
+.example-header p,
+.builder-product-header p {
   margin: 0;
   max-width: 760px;
   color: #526056;
+}
+
+.builder-product-workspace {
+  margin: 0 auto;
+  max-width: 1360px;
+}
+
+.builder-product-workspace .rfb-builder {
+  border: 1px solid #d7ddd8;
+  border-radius: 8px;
+  min-height: calc(100vh - 178px);
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgb(31 42 35 / 8%);
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  border: 1px solid #b9c4bd;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #17211b;
+  padding: 8px 12px;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
 .eyebrow {
@@ -211,14 +246,21 @@ code {
 }
 
 .mode-button:focus-visible,
+.nav-link:focus-visible,
 .debug-panel select:focus {
   outline: 3px solid rgb(45 106 79 / 24%);
   outline-offset: 2px;
 }
 
 @media (max-width: 820px) {
-  .example-shell {
+  .example-shell,
+  .builder-shell {
     padding: 18px;
+  }
+
+  .example-header,
+  .builder-product-header {
+    display: grid;
   }
 
   .workspace {

@@ -56,6 +56,7 @@ export interface RendererSchema extends Record<string, unknown> {
   revisionId: string;
   revisionHash: string;
   locale: string;
+  direction?: "ltr" | "rtl" | "auto";
   title?: string;
   description?: string;
   settings?: {
@@ -135,6 +136,18 @@ export interface NavigationSlotProps {
   onSubmit: () => void;
 }
 
+export interface RendererMessages {
+  submit: string;
+  submitting: string;
+  previous: string;
+  next: string;
+  success: string;
+  submissionFailed: string;
+  invalidSubmission: string;
+  unsupportedNode: string;
+  unsupportedField: string;
+}
+
 export interface RendererSlots {
   Form?: (props: FormSlotProps) => ReactNode;
   Section?: (props: SectionSlotProps) => ReactNode;
@@ -157,6 +170,7 @@ export interface FormRendererProps {
   attemptIdFactory?: () => string;
   clock?: () => string;
   locale?: string;
+  messages?: Partial<RendererMessages>;
   meta?: Record<string, unknown>;
   className?: string;
 }
@@ -193,10 +207,16 @@ export function createDefaultFieldRegistry(overrides: Partial<FieldRegistry> = {
     number: NumberField,
     email: EmailField,
     phone: PhoneField,
+    url: UrlField,
     date: DateField,
+    time: TimeField,
     select: SelectField,
     radio: RadioField,
+    checkboxGroup: CheckboxGroupField,
     checkbox: CheckboxField,
+    switch: SwitchField,
+    rating: RatingField,
+    linearScale: LinearScaleField,
     hidden: HiddenField,
     fileMetadata: FileMetadataField,
     ...overrides
@@ -209,6 +229,8 @@ export function createRendererStyles(): string {
 
 export function FormRenderer(props: FormRendererProps): ReactNode {
   const schema = normalizeSchema(props.schema);
+  const locale = props.locale ?? schema.locale;
+  const i18n = { ...defaultRendererMessages(locale), ...props.messages };
   const registry = useMemo(() => props.registry ?? createDefaultFieldRegistry(), [props.registry]);
   const slots = props.slots ?? {};
   const nodeModel = useMemo(() => createNodeModel(schema), [schema]);
@@ -271,6 +293,7 @@ export function FormRenderer(props: FormRendererProps): ReactNode {
           fieldType: fieldTypeForNode(node),
           value: values[node.name],
           rules: readValidation(node),
+          values,
           options: readOptions(node)
         });
         diagnostics.push(...result.diagnostics);
@@ -297,13 +320,13 @@ export function FormRenderer(props: FormRendererProps): ReactNode {
     const parsedResponse = parsed.value;
     if (!parsedResponse) {
       setStatus("server_error");
-      setGlobalMessages(["Submission failed."]);
+      setGlobalMessages([i18n.submissionFailed]);
       return;
     }
 
     setStatus(parsedResponse.status);
     if (parsedResponse.ok) {
-      setGlobalMessages([parsedResponse.message ?? "Submission received."]);
+      setGlobalMessages([parsedResponse.message ?? i18n.success]);
       return;
     }
 
@@ -319,7 +342,7 @@ export function FormRenderer(props: FormRendererProps): ReactNode {
       ...(parsedResponse.message ? [parsedResponse.message] : [])
     ]);
     focusFirstError(serverFieldErrors, focusTargets.current);
-  }, []);
+  }, [i18n.submissionFailed, i18n.success]);
 
   const submit = useCallback(async () => {
     const fields = schema.settings?.navigation === "steps"
@@ -339,7 +362,7 @@ export function FormRenderer(props: FormRendererProps): ReactNode {
     });
     if (!envelopeResult.value || envelopeResult.diagnostics.length > 0) {
       setStatus("server_error");
-      setGlobalMessages(["Unable to create a valid submission."]);
+      setGlobalMessages([i18n.invalidSubmission]);
       return;
     }
 
@@ -347,14 +370,14 @@ export function FormRenderer(props: FormRendererProps): ReactNode {
     const response = await props.onSubmit?.(envelopeResult.value);
     if (!response) {
       setStatus("success");
-      setGlobalMessages(["Submission received."]);
+      setGlobalMessages([i18n.success]);
       return;
     }
 
     if (isAdapterResult(response)) {
       if (!response.ok) {
         setStatus(rendererStatusFromAdapter(response.status));
-        setGlobalMessages([response.message ?? "Submission failed."]);
+        setGlobalMessages([response.message ?? i18n.submissionFailed]);
         return;
       }
       handleBackendResponse(response.data.response as unknown as BackendResponse);
@@ -362,7 +385,7 @@ export function FormRenderer(props: FormRendererProps): ReactNode {
     }
 
     handleBackendResponse(response);
-  }, [currentStepFields, handleBackendResponse, props, schema, validateNodes, values]);
+  }, [currentStepFields, handleBackendResponse, i18n.invalidSubmission, i18n.submissionFailed, i18n.success, props, schema, validateNodes, values]);
 
   const goNext = useCallback(() => {
     if (!validateNodes(currentStepFields())) {
@@ -403,11 +426,69 @@ export function FormRenderer(props: FormRendererProps): ReactNode {
       );
       return slots.Step ? slots.Step({ node, children: step, currentStep, stepCount: visibleSteps.length }) : step;
     }
+    if (node.type === "content") {
+      return renderContentNode(node);
+    }
+    if (node.type === "ending") {
+      return null;
+    }
     if (node.type !== "field" && node.type !== "hidden") {
-      return createElement("div", { role: "status", className: "rfb-unsupported" }, "Unsupported node");
+      return createElement("div", { role: "status", className: "rfb-unsupported" }, i18n.unsupportedNode);
     }
     return renderFieldNode(node);
   };
+
+  const renderContentNode = (node: RendererNode): ReactNode => {
+    const contentType = String(node.contentType ?? "");
+    const text = readNodeText(node);
+    if (contentType === "heading") {
+      const level = readHeadingLevel(node);
+      return createElement(`h${level}`, { className: "rfb-content-heading", "data-rfb-content-type": "heading" }, text || node.id);
+    }
+    if (contentType === "paragraph") {
+      return createElement("p", { className: "rfb-content-paragraph", "data-rfb-content-type": "paragraph" }, readNodePropString(node, "text") || text);
+    }
+    if (contentType === "image") {
+      const src = readNodePropString(node, "src");
+      const alt = readNodePropString(node, "alt");
+      const caption = readNodePropString(node, "caption") || node.description;
+      return createElement(
+        "figure",
+        { className: "rfb-content-image", "data-rfb-content-type": "image" },
+        src
+          ? createElement("img", { src, alt, loading: "lazy" })
+          : createElement("div", { role: "status", className: "rfb-unsupported" }, i18n.unsupportedNode),
+        caption ? createElement("figcaption", null, caption) : null
+      );
+    }
+    if (contentType === "divider") {
+      return createElement("hr", { className: "rfb-content-divider", "data-rfb-content-type": "divider" });
+    }
+    if (contentType === "spacer") {
+      return createElement("div", {
+        className: "rfb-content-spacer",
+        "data-rfb-content-type": "spacer",
+        "data-rfb-spacer-size": readNodePropString(node, "size") || "medium",
+        "aria-hidden": "true"
+      });
+    }
+    if (contentType === "welcome") {
+      return createElement(
+        "section",
+        { className: "rfb-welcome-screen", "data-rfb-content-type": "welcome", "aria-labelledby": `${node.id}-title` },
+        createElement("h2", { id: `${node.id}-title` }, text || node.id),
+        node.description ? createElement("p", null, node.description) : null
+      );
+    }
+    return createElement("div", { role: "status", className: "rfb-unsupported" }, i18n.unsupportedNode);
+  };
+
+  const renderEndingNode = (node: RendererNode): ReactNode => createElement(
+    "section",
+    { className: "rfb-ending-screen", "data-rfb-node-type": "ending", "aria-labelledby": `${node.id}-title` },
+    createElement("h2", { id: `${node.id}-title` }, readNodeText(node) || i18n.success),
+    node.description ? createElement("p", null, node.description) : null
+  );
 
   const renderFieldNode = (node: RendererNode): ReactNode => {
     const fieldType = fieldTypeForNode(node);
@@ -416,7 +497,7 @@ export function FormRenderer(props: FormRendererProps): ReactNode {
       return createElement(
         "div",
         { role: "status", className: "rfb-unsupported", "data-rfb-field-type": fieldType },
-        "Unsupported field"
+        i18n.unsupportedField
       );
     }
     const ids = createFieldIds(node);
@@ -457,17 +538,23 @@ export function FormRenderer(props: FormRendererProps): ReactNode {
     return slots.FieldChrome ? slots.FieldChrome(chromeProps) : DefaultFieldChrome(chromeProps);
   };
 
-  const content = schema.settings?.navigation === "steps" && activeStep
+  const successEnding = status === "success" ? schema.nodes.find((node) => node.type === "ending" && isVisible(node)) : undefined;
+  const content = successEnding
+    ? renderEndingNode(successEnding)
+    : schema.settings?.navigation === "steps" && activeStep
     ? renderNode(activeStep)
     : nodeModel.rootNodes.map((node) => createElement(Fragment, { key: node.id }, renderNode(node)));
 
-  const navigation = schema.settings?.navigation === "steps" && activeStep
+  const navigation = successEnding
+    ? null
+    : schema.settings?.navigation === "steps" && activeStep
     ? renderNavigation({
       canGoPrevious: currentStep > 0,
       canGoNext: currentStep < visibleSteps.length - 1,
       isSubmitting: status === "submitting",
       onPrevious: goPrevious,
       onNext: goNext,
+      messages: i18n,
       onSubmit: () => {
         void submit();
       }
@@ -475,10 +562,10 @@ export function FormRenderer(props: FormRendererProps): ReactNode {
     : createElement(
         "button",
         { type: "button", className: "rfb-button rfb-submit-button", onClick: () => void submit(), disabled: status === "submitting" },
-        "Submit"
+        status === "submitting" ? i18n.submitting : i18n.submit
       );
 
-  const messages = slots.Messages
+  const messageNode = slots.Messages
     ? slots.Messages({ messages: globalMessages, status })
     : createElement(
       "div",
@@ -490,6 +577,7 @@ export function FormRenderer(props: FormRendererProps): ReactNode {
     "form",
     {
       className: ["rfb-form", props.className].filter(Boolean).join(" "),
+      dir: directionForSchema(schema),
       "data-rfb-submission-status": status,
       onSubmit: (event: FormEvent) => {
         event.preventDefault();
@@ -499,8 +587,8 @@ export function FormRenderer(props: FormRendererProps): ReactNode {
     schema.title ? createElement("h2", null, schema.title) : null,
     schema.description ? createElement("p", className("rfb-form-description"), schema.description) : null,
     createElement(FormRendererProvider, { schema, values, status, setValue }, content),
-    messages,
-    createElement("div", { className: "rfb-navigation" }, navigation)
+    successEnding ? null : messageNode,
+    navigation ? createElement("div", { className: "rfb-navigation" }, navigation) : null
   );
 
   return slots.Form ? slots.Form({ children: form, schema, status }) : form;
@@ -541,8 +629,16 @@ function PhoneField(props: RendererFieldProps): ReactNode {
   return createInput(props, "tel");
 }
 
+function UrlField(props: RendererFieldProps): ReactNode {
+  return createInput(props, "url");
+}
+
 function DateField(props: RendererFieldProps): ReactNode {
   return createInput(props, "date");
+}
+
+function TimeField(props: RendererFieldProps): ReactNode {
+  return createInput(props, "time");
 }
 
 function NumberField(props: RendererFieldProps): ReactNode {
@@ -596,6 +692,39 @@ function RadioField(props: RendererFieldProps): ReactNode {
   );
 }
 
+function CheckboxGroupField(props: RendererFieldProps): ReactNode {
+  const selected = Array.isArray(props.value) ? props.value.map(String) : [];
+  return createElement(
+    "fieldset",
+    {
+      className: "rfb-fieldset",
+      "aria-describedby": describedBy(props),
+      "aria-invalid": props.errors.length > 0 ? "true" : undefined,
+      disabled: props.disabled
+    },
+    createElement("legend", { id: props.ids.labelId }, props.label),
+    ...props.options.filter((option) => !option.disabled).map((option) => {
+      const id = `${props.ids.inputId}-${option.value}`;
+      const checked = selected.includes(option.value);
+      return createElement(
+        "label",
+        { key: option.value, htmlFor: id },
+        createElement("input", {
+          id,
+          name: props.node.name,
+          type: "checkbox",
+          value: option.value,
+          checked,
+          onBlur: props.onBlur,
+          onChange: () => props.onChange(checked ? selected.filter((value) => value !== option.value) : [...selected, option.value]),
+          ref: props.focusRef as Ref<HTMLInputElement>
+        }),
+        option.label
+      );
+    })
+  );
+}
+
 function CheckboxField(props: RendererFieldProps): ReactNode {
   return createElement("input", {
     ...commonInputProps(props, Boolean(props.value)),
@@ -603,6 +732,24 @@ function CheckboxField(props: RendererFieldProps): ReactNode {
     type: "checkbox",
     onChange: (event: ChangeEvent<HTMLInputElement>) => props.onChange(event.currentTarget.checked)
   });
+}
+
+function SwitchField(props: RendererFieldProps): ReactNode {
+  return createElement("input", {
+    ...commonInputProps(props, Boolean(props.value)),
+    checked: Boolean(props.value),
+    role: "switch",
+    type: "checkbox",
+    onChange: (event: ChangeEvent<HTMLInputElement>) => props.onChange(event.currentTarget.checked)
+  });
+}
+
+function RatingField(props: RendererFieldProps): ReactNode {
+  return createInput(props, "number", (value) => value === "" ? undefined : Number(value));
+}
+
+function LinearScaleField(props: RendererFieldProps): ReactNode {
+  return createInput(props, "range", (value) => Number(value));
 }
 
 function HiddenField(props: RendererFieldProps): ReactNode {
@@ -650,6 +797,7 @@ function commonInputProps(props: RendererFieldProps, value: unknown): Record<str
     "aria-invalid": props.errors.length > 0 ? "true" : undefined,
     required: props.required,
     disabled: props.disabled,
+    readOnly: Boolean(props.node.readOnly),
     value,
     onBlur: (_event: FocusEvent<HTMLElement>) => props.onBlur(),
     onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
@@ -715,7 +863,7 @@ function flattenRenderableChildren(
   return output;
 }
 
-function renderNavigation(props: NavigationSlotProps, slots: RendererSlots): ReactNode {
+function renderNavigation(props: NavigationSlotProps & { messages: RendererMessages }, slots: RendererSlots): ReactNode {
   if (slots.Navigation) {
     return slots.Navigation(props);
   }
@@ -725,14 +873,14 @@ function renderNavigation(props: NavigationSlotProps, slots: RendererSlots): Rea
     createElement(
       "button",
       { type: "button", className: "rfb-button rfb-previous-button", onClick: props.onPrevious, disabled: !props.canGoPrevious },
-      "Previous"
+      props.messages.previous
     ),
     props.canGoNext
-      ? createElement("button", { type: "button", className: "rfb-button rfb-next-button", onClick: props.onNext }, "Next")
+      ? createElement("button", { type: "button", className: "rfb-button rfb-next-button", onClick: props.onNext }, props.messages.next)
       : createElement(
           "button",
           { type: "button", className: "rfb-button rfb-submit-button", onClick: props.onSubmit, disabled: props.isSubmitting },
-          "Submit"
+          props.isSubmitting ? props.messages.submitting : props.messages.submit
         )
   );
 }
@@ -762,6 +910,25 @@ function readValidation(node: RendererNode): ValidationRule[] {
 
 function readOptions(node: RendererNode): RendererOption[] {
   return Array.isArray(node.options) ? node.options.filter(isRendererOption) : [];
+}
+
+function readNodeText(node: RendererNode): string {
+  return node.label || readNodePropString(node, "title") || readNodePropString(node, "text") || "";
+}
+
+function readNodePropString(node: RendererNode, key: string): string {
+  const props = isRecord(node.props) ? node.props : {};
+  const value = props[key];
+  return typeof value === "string" ? value : "";
+}
+
+function readHeadingLevel(node: RendererNode): 2 | 3 | 4 | 5 | 6 {
+  const props = isRecord(node.props) ? node.props : {};
+  const value = typeof props.level === "number" ? props.level : Number(props.level);
+  if (!Number.isFinite(value)) {
+    return 3;
+  }
+  return Math.min(6, Math.max(2, Math.round(value))) as 2 | 3 | 4 | 5 | 6;
 }
 
 function isRendererOption(value: unknown): value is RendererOption {
@@ -796,6 +963,39 @@ function sanitizeId(value: string): string {
 
 function errorToMessage(error: FieldValidationError): string {
   return error.message ?? error.code;
+}
+
+export const rendererMessageDictionaries = {
+  en: {
+    submit: "Submit",
+    submitting: "Submitting",
+    previous: "Previous",
+    next: "Next",
+    success: "Submission received.",
+    submissionFailed: "Submission failed.",
+    invalidSubmission: "Unable to create a valid submission.",
+    unsupportedNode: "Unsupported node",
+    unsupportedField: "Unsupported field"
+  },
+  fa: {
+    submit: "ارسال",
+    submitting: "در حال ارسال",
+    previous: "قبلی",
+    next: "بعدی",
+    success: "پاسخ شما ثبت شد.",
+    submissionFailed: "ارسال پاسخ ناموفق بود.",
+    invalidSubmission: "امکان ساخت ارسال معتبر وجود ندارد.",
+    unsupportedNode: "بخش پشتیبانی‌نشده",
+    unsupportedField: "فیلد پشتیبانی‌نشده"
+  }
+} as const satisfies Record<string, RendererMessages>;
+
+function defaultRendererMessages(locale: string): RendererMessages {
+  return locale.toLowerCase().startsWith("fa") ? rendererMessageDictionaries.fa : rendererMessageDictionaries.en;
+}
+
+function directionForSchema(schema: RendererSchema): "ltr" | "rtl" {
+  return schema.direction === "rtl" || schema.locale.toLowerCase().startsWith("fa") ? "rtl" : "ltr";
 }
 
 function focusFirstError(errors: Record<string, string[]>, targets: Map<string, HTMLElement>): void {

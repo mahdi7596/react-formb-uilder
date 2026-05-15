@@ -1,5 +1,5 @@
-import type { ConditionExpression } from "../conditions/index.js";
-import { isEmpty } from "../conditions/index.js";
+import type { ConditionExpression, PredicateRegistration } from "../conditions/index.js";
+import { evaluateCondition, isEmpty } from "../conditions/index.js";
 import { createDiagnostic, DIAGNOSTIC_CODES, type Diagnostic } from "../diagnostics/index.js";
 
 export type BuiltInValidationRuleType =
@@ -52,10 +52,12 @@ export interface ValidateFieldValueInput {
   fieldType: string;
   value: unknown;
   rules: ValidationRule[];
+  values?: Record<string, unknown>;
   options?: ValidationOption[];
   hidden?: boolean;
   disabled?: boolean;
   validators?: ValidatorRegistration[];
+  predicates?: PredicateRegistration[];
 }
 
 export interface FieldValidationError {
@@ -77,6 +79,17 @@ export function validateFieldValue(input: ValidateFieldValueInput): ValidateFiel
   const diagnostics: Diagnostic[] = [];
 
   for (const rule of input.rules) {
+    if (rule.when) {
+      const condition = evaluateCondition(rule.when, {
+        values: input.values ?? {},
+        ...(input.predicates ? { predicates: input.predicates } : {})
+      });
+      diagnostics.push(...condition.diagnostics);
+      if (condition.diagnostics.length > 0 || !condition.value) {
+        continue;
+      }
+    }
+
     const type = rule.type;
 
     if (type.startsWith("custom:")) {

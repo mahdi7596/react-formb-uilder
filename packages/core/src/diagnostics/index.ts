@@ -17,6 +17,7 @@ export const DIAGNOSTIC_CODES = {
   invalidSubmissionEnvelope: "invalid_submission_envelope",
   invalidSubmittedPath: "invalid_submitted_path",
   invalidUrl: "invalid_url",
+  missingAccessibleContent: "missing_accessible_content",
   missingRequiredField: "missing_required_field",
   repeaterNotSupported: "repeater_not_supported",
   requiredHiddenValue: "required_hidden_value",

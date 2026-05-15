@@ -293,3 +293,180 @@ The React builder SHALL be audited for MVP release-candidate readiness across cr
 #### Scenario: Builder public API hygiene is audited
 - **WHEN** Phase 13 builder package checks run
 - **THEN** public builder exports avoid leaking TanStack Query mutation/query objects, raw dnd-kit event contracts, backend-specific SDK objects, or schema mutation internals
+
+### Requirement: Product-grade expanded palette
+The React builder package SHALL expose the product-completion field catalog through a searchable, grouped palette without removing existing MVP builder behavior.
+
+#### Scenario: MVP hardening fields are discoverable
+- **WHEN** the builder palette is rendered during product-completion phases
+- **THEN** text, textarea, number, email, phone, URL, radio, checkbox group, select, checkbox, switch, date, time, rating, linear scale, hidden field, and read-only/display value are discoverable where their contracts are supported
+
+#### Scenario: Palette groups reflect creator intent
+- **WHEN** the palette is inspected
+- **THEN** components are grouped by creator-facing categories such as Basic, Choice, Date/Time, Survey, Contact, Content, Layout, Logic/System, Integrations, and Advanced rather than by internal package names
+
+#### Scenario: Deferred fields are not silently enabled
+- **WHEN** a field requires unspecified contracts such as repeaters, payments, upload orchestration, dynamic lookup, calculations, or signatures
+- **THEN** the palette either hides it, marks it unavailable, or routes it to an explicit future/plugin path without creating unsupported schema behavior
+
+### Requirement: Structured option editor
+The React builder package SHALL provide a structured option editor for choice-like fields.
+
+#### Scenario: Creator edits options without raw text syntax
+- **WHEN** a creator edits dropdown, radio, checkbox group, multi-select, image choice, ranking, or matrix options
+- **THEN** the builder provides controls to add, delete, duplicate, reorder, label, assign stable values, set defaults, disable options, and bulk paste options without requiring `label=value` text syntax
+
+#### Scenario: Option editor uses commands
+- **WHEN** a creator changes option labels, values, order, defaults, disabled state, scores, or metadata
+- **THEN** the change is routed through builder commands and participates in diagnostics, undo, redo, and publish warnings
+
+#### Scenario: Option editor warns about contract changes
+- **WHEN** an option submitted value or choice field value shape changes compared with published revision context
+- **THEN** the editor surfaces dangerous-change context before publish
+
+### Requirement: Product-grade inspector surfaces
+The React builder package SHALL provide field-specific inspector surfaces for product-grade authoring.
+
+#### Scenario: Inspector exposes product tabs
+- **WHEN** a creator selects a node with supported settings
+- **THEN** the inspector exposes Content, Choices, Validation, Logic, Appearance, Data, Accessibility, and Advanced surfaces as appropriate for the node
+
+#### Scenario: Inspector replaces raw JSON for common logic
+- **WHEN** a creator configures common show/hide or requiredness logic
+- **THEN** the builder provides visual condition controls that write declarative condition data rather than requiring raw JSON entry
+
+#### Scenario: Inspector keeps developer details available but scoped
+- **WHEN** submitted paths, generated ids, custom extension keys, JSON-like diagnostics, backend mappings, or migration metadata are shown
+- **THEN** the builder presents them as technical or advanced values and preserves LTR readability inside RTL layouts
+
+### Requirement: Product-grade builder actions
+The React builder package SHALL use accessible icon buttons, labels, and tooltips for common command actions.
+
+#### Scenario: Quick actions are accessible and recognizable
+- **WHEN** canvas nodes, command bars, option rows, or inspector rows expose actions such as add, move, duplicate, delete, collapse, expand, undo, redo, preview, publish, settings, or search
+- **THEN** the controls use recognizable icons or icon-plus-label affordances with accessible names and tooltips rather than ambiguous abbreviations such as `Up`, `Dn`, or `Cp`
+
+#### Scenario: Directional actions mirror correctly
+- **WHEN** the builder is rendered in RTL
+- **THEN** directional icons and movement affordances mirror visually where appropriate while preserving logical schema order and technical value direction
+
+### Requirement: Content and layout authoring blocks
+The React builder package SHALL support authoring content and layout blocks once their renderer/schema contracts are available.
+
+#### Scenario: Content blocks are authored as schema nodes
+- **WHEN** heading, paragraph, image, divider, spacer, section, page/step, welcome screen, ending screen, or progress display blocks are added
+- **THEN** the builder creates JSON-serializable canonical nodes and routes edits through commands
+
+#### Scenario: Content block accessibility is enforced
+- **WHEN** a content block needs accessible text such as an image alt value, heading text, or ending title
+- **THEN** the builder surfaces diagnostics when the required accessible content is missing
+
+### Requirement: Expanded MVP-hardening palette implementation
+The React builder package SHALL expose supported MVP-hardening field types in the component palette.
+
+#### Scenario: Supported fields are visible in palette
+- **WHEN** the builder palette is rendered
+- **THEN** URL, checkbox group, switch, time, rating, linear scale, hidden field, read-only/display value, and file metadata entries are available when their current contracts are supported
+
+#### Scenario: Palette insertion remains command-backed
+- **WHEN** a creator adds any expanded palette field
+- **THEN** the builder creates a JSON-serializable canonical node through the existing command/store path and selects the inserted node
+
+### Requirement: Structured option editor implementation
+The React builder package SHALL replace raw textarea option editing with structured controls for supported choice fields.
+
+#### Scenario: Options are edited as rows
+- **WHEN** a creator selects a select, radio, or checkbox group field
+- **THEN** the inspector shows option rows with editable label, submitted value, disabled state, default control, duplicate, delete, and move controls
+
+#### Scenario: Creator can add and bulk paste options
+- **WHEN** a creator adds a single option or bulk pastes multiple option labels
+- **THEN** the builder creates structured option records with stable submitted values and unique ids
+
+#### Scenario: Option changes use diagnostics
+- **WHEN** a creator changes an option submitted value or deletes an option
+- **THEN** the edit is routed through `updateOptions` and dangerous option diagnostics remain visible when emitted by commands
+
+### Requirement: Option editor verification
+The project SHALL verify expanded palette and structured option editing before Phase 15 is considered complete.
+
+#### Scenario: Builder tests cover structured options
+- **WHEN** builder tests run
+- **THEN** they cover adding, duplicating, deleting, reordering, disabling, defaulting, bulk pasting, and editing stable option values
+
+#### Scenario: Browser flow covers real dropdown authoring
+- **WHEN** Playwright runs for the builder
+- **THEN** it verifies that a creator can create a dropdown with multiple options through structured controls and preview it through the real renderer
+
+### Requirement: Visual validation controls
+
+The React builder inspector SHALL provide field-aware visual controls for common validation rules instead of requiring creators to edit validation JSON for MVP field behavior.
+
+#### Scenario: Creator configures common validation visually
+- **WHEN** a creator selects a supported field and opens the validation inspector panel
+- **THEN** the builder exposes relevant controls for required, min/max length, min/max number, pattern, email, URL, or min/max selected rules according to the field type
+- **AND** validation changes are persisted through builder commands
+- **AND** requiredness changes continue to surface dangerous-change diagnostics where applicable
+
+### Requirement: Visual logic builder foundation
+
+The React builder inspector SHALL provide safe visual controls for common visibility and conditional requiredness logic using the declarative condition model.
+
+#### Scenario: Creator configures visibility without JSON
+- **WHEN** a creator opens the logic inspector panel for a selected field
+- **THEN** the builder exposes show/hide behavior controls and AND/OR condition row controls
+- **AND** saving the visual rule writes a canonical declarative condition expression
+- **AND** no executable JavaScript, React components, or backend-specific behavior is persisted
+
+#### Scenario: Creator configures conditional requiredness without JSON
+- **WHEN** a creator configures conditional requiredness for a selected field
+- **THEN** the builder stores the condition on a required validation rule using `when`
+- **AND** plain requiredness and conditional requiredness are distinguishable in the UI
+
+#### Scenario: Unsupported logic is explicit
+- **WHEN** a creator selects an unsupported logic action or the selected field has an unsupported existing condition shape
+- **THEN** the builder surfaces a visible diagnostic
+- **AND** it does not silently persist unsupported behavior as if it were supported visual logic
+
+#### Scenario: Advanced condition JSON is debug-only
+- **WHEN** a creator inspects advanced condition output
+- **THEN** the builder shows a read-only JSON representation of the generated canonical condition
+- **AND** common Phase 16 logic authoring does not require typing JSON
+
+#### Scenario: Hidden value semantics are visible
+- **WHEN** a creator selects a hidden field or reviews logic-related data behavior
+- **THEN** the inspector explains whether hidden values are excluded or preserved according to the current schema settings
+
+### Requirement: Persian builder localization
+
+The React builder SHALL support Persian user-facing workspace strings while preserving LTR rendering for technical values.
+
+#### Scenario: Persian builder strings render in RTL mode
+- **WHEN** the builder locale is Persian and direction is RTL
+- **THEN** primary workspace labels, commands, tabs, empty states, validation labels, and logic labels render Persian strings
+- **AND** submitted paths, node ids, revision ids, JSON, URLs, and option submitted values remain LTR
+
+#### Scenario: Host overrides builder strings
+- **WHEN** a host provides builder message overrides
+- **THEN** those strings override the default locale dictionary without changing persisted schema data
+
+### Requirement: Phase 18 Content And Layout Authoring
+
+The React builder SHALL support content and layout authoring blocks as first-class canvas nodes.
+
+#### Scenario: Palette creates content and layout nodes
+- **WHEN** a creator adds heading, paragraph, image, divider, spacer, section, page/step, welcome screen, or ending screen blocks
+- **THEN** the builder creates JSON-serializable canonical nodes through command-backed schema edits
+
+#### Scenario: Inspector adapts to non-submittable nodes
+- **WHEN** a creator selects a content, section, step, or ending node
+- **THEN** the inspector exposes relevant content/accessibility settings
+- **AND** it does not expose submitted-path editing for non-submittable nodes
+
+### Requirement: Phase 19 Builder Preview Parity Examples
+
+The builder example SHALL prove that realistic templates preview through the real renderer.
+
+#### Scenario: Production template preview matches renderer behavior
+- **WHEN** a creator previews a realistic schema containing content blocks, choices, and logic
+- **THEN** preview mode renders the same respondent controls and conditional behavior as the public renderer path

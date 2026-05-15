@@ -235,3 +235,96 @@ The React renderer SHALL be audited for MVP release-candidate readiness across p
 #### Scenario: Renderer public API hygiene is audited
 - **WHEN** Phase 13 renderer package checks run
 - **THEN** public renderer exports avoid leaking React Hook Form types, internal state libraries, or backend-specific transport objects
+
+### Requirement: Product-grade renderer catalog parity
+The React renderer package SHALL render product-completion fields and blocks only when their canonical contracts are supported.
+
+#### Scenario: MVP hardening fields render through registry
+- **WHEN** schemas contain supported MVP hardening fields such as URL, checkbox group, switch, time, rating, linear scale, hidden, or read-only/display values
+- **THEN** the renderer resolves them through built-in or registered field renderers while preserving renderer-managed accessibility, validation, conditions, hidden semantics, and submission behavior
+
+#### Scenario: Unsupported advanced fields fail closed
+- **WHEN** a schema contains an advanced or plugin field without a registered renderer or finalized contract
+- **THEN** the renderer displays a safe unsupported-field state and exposes diagnostics rather than silently submitting an unknown value
+
+### Requirement: Content and layout runtime rendering
+The React renderer package SHALL render supported content and layout blocks from canonical schema nodes.
+
+#### Scenario: Content blocks render accessibly
+- **WHEN** a visible heading, paragraph, image, divider, spacer, welcome screen, ending screen, or progress display block is rendered
+- **THEN** the renderer outputs accessible markup that does not create submitted data unless the node contract explicitly says it does
+
+#### Scenario: Section and step blocks preserve order
+- **WHEN** section or page/step nodes contain child ids
+- **THEN** the renderer displays visible child nodes in canonical order and applies navigation, progress, and validation behavior according to form settings
+
+### Requirement: Localization-aware renderer behavior
+The React renderer package SHALL support product-completion localization requirements without changing submitted contract values.
+
+#### Scenario: Labels and option labels localize independently from values
+- **WHEN** a form is rendered in a locale with translated labels, descriptions, placeholders, errors, button text, option labels, or endings
+- **THEN** the renderer displays localized text while preserving stable node ids, submitted paths, and option submitted values
+
+#### Scenario: RTL runtime preserves technical LTR values
+- **WHEN** the renderer displays submitted paths, schema ids, URLs, email addresses, code, JSON, or other technical values inside RTL screens
+- **THEN** those technical values remain readable in LTR direction
+
+#### Scenario: Persian digit normalization is explicit
+- **WHEN** Persian or Arabic digit normalization is enabled for numeric input
+- **THEN** the renderer normalizes input for validation and submission according to the configured locale policy rather than mutating unrelated text fields
+
+### Requirement: Preview parity for product-grade nodes
+The React builder preview SHALL continue to use the real renderer for product-grade fields and blocks.
+
+#### Scenario: Builder preview renders product nodes through renderer
+- **WHEN** a creator previews a schema containing supported product-grade fields or content/layout blocks
+- **THEN** the preview mounts the React renderer path instead of duplicating respondent runtime behavior inside builder-only code
+
+### Requirement: Phase 15 expanded palette fields SHALL have real renderer parity
+
+The React renderer SHALL provide minimal respondent runtime rendering for the basic field types newly exposed by the Phase 15 builder palette so the builder preview remains backed by the real renderer.
+
+#### Scenario: Newly exposed basic fields render in respondent runtime
+- **WHEN** a form contains URL, time, checkbox group, switch, rating, linear scale, or read-only/display-value fields
+- **THEN** the React renderer renders an accessible field control for each supported field type
+- **AND** choice-like fields preserve labels, submitted values, disabled option state, and default values where the current schema supports them
+- **AND** read-only/display-value fields do not allow respondent editing
+
+#### Scenario: Builder preview uses the real renderer for expanded fields
+- **WHEN** a creator inserts newly exposed Phase 15 fields into the builder
+- **THEN** preview mode renders those fields through the React renderer registry
+- **AND** the builder does not introduce a separate duplicated preview implementation for those field types
+
+### Requirement: Persian renderer localization
+
+The React renderer SHALL support Persian runtime strings and RTL layout without changing canonical schema contracts.
+
+#### Scenario: Persian renderer runtime strings render
+- **WHEN** a schema locale starts with `fa` or the renderer receives Persian locale
+- **THEN** submit, previous, next, success, and validation messages use Persian defaults unless host overrides are provided
+- **AND** form direction follows schema or host direction while technical values stay LTR where applicable
+
+### Requirement: Phase 18 Runtime Content Blocks
+
+The React renderer SHALL render supported content and layout nodes through the same renderer path used by builder preview.
+
+#### Scenario: Content blocks render accessibly
+- **WHEN** a form contains heading, paragraph, image, divider, spacer, welcome, section, step, or ending nodes
+- **THEN** the renderer outputs accessible markup for the supported node
+- **AND** no submitted value is created unless the node is a field or hidden field
+
+#### Scenario: Ending screens replace the form after success
+- **WHEN** a submission succeeds and the schema contains a visible ending node
+- **THEN** the renderer displays that ending node as the success screen
+
+### Requirement: Phase 19 Renderer Example Coverage
+
+The renderer examples SHALL demonstrate production-style respondent forms through canonical schemas.
+
+#### Scenario: Renderer-only embed is available
+- **WHEN** the example app is switched to renderer-only mode
+- **THEN** the public form renders and submits without requiring the builder surface
+
+#### Scenario: Persian RTL template preserves contracts
+- **WHEN** the Persian intake template is submitted
+- **THEN** Persian labels and RTL layout are displayed while submitted paths and option values remain stable backend contract values

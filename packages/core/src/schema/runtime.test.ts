@@ -86,4 +86,44 @@ describe("schema analysis runtime", () => {
       expect.arrayContaining(["condition_cycle", "invalid_condition"])
     );
   });
+
+  it("accepts supported content and layout nodes without submitted paths", () => {
+    const result = analyzeSchema({
+      ...baseSchema,
+      nodes: [
+        { id: "welcome", type: "content", contentType: "welcome", label: "Welcome", description: "Start here." },
+        { id: "heading", type: "content", contentType: "heading", label: "Contact details" },
+        { id: "paragraph", type: "content", contentType: "paragraph", props: { text: "Tell us about your request." } },
+        { id: "image", type: "content", contentType: "image", props: { src: "https://example.test/banner.png", alt: "Office banner" } },
+        { id: "divider", type: "content", contentType: "divider" },
+        { id: "spacer", type: "content", contentType: "spacer", props: { size: "medium" } },
+        { id: "section", type: "section", label: "Section", children: ["field_email"] },
+        { id: "step", type: "step", label: "Step", children: ["field_company"] },
+        { id: "thanks", type: "ending", label: "Thank you", description: "We received your request." },
+        ...baseSchema.nodes
+      ]
+    });
+
+    expect(result.diagnostics).toEqual([]);
+    expect(Array.from(result.fieldsByPath.keys())).toEqual(["email", "company.name"]);
+  });
+
+  it("diagnoses missing accessible content on image, heading, welcome, and ending nodes", () => {
+    const result = analyzeSchema({
+      ...baseSchema,
+      nodes: [
+        { id: "image", type: "content", contentType: "image", props: { src: "https://example.test/banner.png" } },
+        { id: "heading", type: "content", contentType: "heading" },
+        { id: "welcome", type: "content", contentType: "welcome", props: { text: " " } },
+        { id: "ending", type: "ending" }
+      ]
+    });
+
+    expect(result.diagnostics.map((item) => `${item.code}:${item.path}`)).toEqual([
+      "missing_accessible_content:image",
+      "missing_accessible_content:heading",
+      "missing_accessible_content:welcome",
+      "missing_accessible_content:ending"
+    ]);
+  });
 });

@@ -9,6 +9,7 @@ Before responding to a new implementation prompt, inspect:
 1. `docs/architecture/2026-05-14-react-form-builder-architecture-design.md`
 2. `AGENTS.md`
 3. Any OpenSpec change files if they are added later under `openspec/`
+4. While the product-completion plan is active, inspect `docs/research/2026-05-15-complete-form-builder-feature-component-inventory.md` and `docs/superpowers/plans/2026-05-15-form-builder-product-completion-master-plan.md` before proposing or implementing product-completion changes. Stop treating these two files as required startup context once that plan is explicitly marked complete, archived, or superseded by a newer dated plan.
 
 Use the architecture design as the source of truth unless the user explicitly supersedes it in a newer dated document or direct instruction.
 
@@ -216,8 +217,9 @@ When a new user prompt starts a meaningful task:
 1. Re-read the architecture document sections relevant to the request.
 2. Check whether an existing spec, task list, or implementation already covers it.
 3. Check whether a project-local skill applies, especially `form-builder-ux-reviewer` for creator UX or `form-builder-ui-reviewer` for visual UI quality.
-4. Preserve newer user decisions over older draft architecture text.
-5. If you create new durable decisions, document them in a dated Markdown file or an OpenSpec change so the next AI can inspect them.
-6. Keep final notes concise and include which files changed and what verification was run.
+4. For development that continues the product after the MVP release candidate while the product-completion plan is active, start from `docs/superpowers/plans/2026-05-15-form-builder-product-completion-master-plan.md` and read `docs/research/2026-05-15-complete-form-builder-feature-component-inventory.md` as the source for competitor findings, component behavior, feature gaps, Persian/RTL/Iran requirements, and recommended OpenSpec changes. Once that plan is complete, archived, or superseded, follow the newer active plan instead.
+5. Preserve newer user decisions over older draft architecture text.
+6. If you create new durable decisions, document them in a dated Markdown file or an OpenSpec change so the next AI can inspect them.
+7. Keep final notes concise and include which files changed and what verification was run.
 
 The goal is that a future AI can enter this workspace cold, inspect this file plus the architecture design, and continue the form builder without rediscovering the project direction.

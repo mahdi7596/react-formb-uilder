@@ -74,6 +74,7 @@ describe("FormRenderer", () => {
         { id: "age", type: "field", fieldType: "number", name: "age", label: "Age" },
         { id: "email", type: "field", fieldType: "email", name: "email", label: "Email" },
         { id: "phone", type: "field", fieldType: "phone", name: "phone", label: "Phone" },
+        { id: "website", type: "field", fieldType: "url", name: "website", label: "Website" },
         {
           id: "promo",
           type: "field",
@@ -106,6 +107,22 @@ describe("FormRenderer", () => {
           ]
         },
         { id: "accepted", type: "field", fieldType: "checkbox", name: "accepted", label: "I agree" },
+        {
+          id: "features",
+          type: "field",
+          fieldType: "checkboxGroup",
+          name: "features",
+          label: "Features",
+          options: [
+            { id: "forms", label: "Forms", value: "forms" },
+            { id: "reports", label: "Reports", value: "reports" }
+          ]
+        },
+        { id: "enabled", type: "field", fieldType: "switch", name: "enabled", label: "Enabled" },
+        { id: "time", type: "field", fieldType: "time", name: "time", label: "Preferred time" },
+        { id: "rating", type: "field", fieldType: "rating", name: "rating", label: "Rating" },
+        { id: "scale", type: "field", fieldType: "linearScale", name: "scale", label: "Scale" },
+        { id: "readonly", type: "field", fieldType: "text", name: "readonly", label: "Read only", readOnly: true, defaultValue: "Fixed" },
         { id: "token", type: "hidden", name: "token", defaultValue: "secret" },
         { id: "resume", type: "field", fieldType: "fileMetadata", name: "resume", label: "Resume metadata" }
       ]
@@ -123,12 +140,19 @@ describe("FormRenderer", () => {
     expect(screen.getByLabelText("Age")).toHaveAttribute("type", "number");
     expect(screen.getByRole("textbox", { name: "Email" })).toHaveAttribute("type", "email");
     expect(screen.getByRole("textbox", { name: "Phone" })).toHaveAttribute("type", "tel");
+    expect(screen.getByRole("textbox", { name: "Website" })).toHaveAttribute("type", "url");
     expect(screen.getByLabelText("Promo code")).toBeDisabled();
     expect(screen.getByLabelText("Preferred date")).toHaveAttribute("type", "date");
+    expect(screen.getByLabelText("Preferred time")).toHaveAttribute("type", "time");
     expect(screen.getByLabelText("Reason")).toHaveAttribute("data-rfb-field-type", "select");
     expect(screen.queryByRole("option", { name: "Disabled" })).toBeNull();
     expect(screen.getByRole("radiogroup", { name: "Contact method" })).toBeTruthy();
     expect(screen.getByLabelText("I agree")).toHaveAttribute("type", "checkbox");
+    expect(screen.getByRole("group", { name: "Features" })).toBeTruthy();
+    expect(screen.getByLabelText("Enabled")).toHaveAttribute("role", "switch");
+    expect(screen.getByLabelText("Rating")).toHaveAttribute("type", "number");
+    expect(screen.getByLabelText("Scale")).toHaveAttribute("type", "range");
+    expect(screen.getByLabelText("Read only")).toHaveAttribute("readonly");
     expect(container.querySelector(".rfb-field [name='token']")).toBeNull();
     expect(container.querySelector("input[type='hidden'][name='token']")).toBeTruthy();
     expect(screen.getByLabelText("Resume metadata")).toBeTruthy();
@@ -230,6 +254,42 @@ describe("FormRenderer", () => {
     expect(screen.getByRole("button", { name: "Previous" })).toBeTruthy();
   });
 
+  it("renders content, layout, welcome, and ending nodes without submitted values", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn(async (_envelope: SubmissionEnvelope): Promise<BackendResponse> => successResponse("sub_content"));
+    const schema = {
+      ...baseSchema,
+      nodes: [
+        { id: "welcome", type: "content", contentType: "welcome", label: "Welcome", description: "Before you start." },
+        { id: "heading", type: "content", contentType: "heading", label: "Profile", props: { level: 3 } },
+        { id: "paragraph", type: "content", contentType: "paragraph", props: { text: "Tell us who should receive updates." } },
+        { id: "image", type: "content", contentType: "image", props: { src: "https://example.test/banner.png", alt: "Team banner", caption: "Our team" } },
+        { id: "divider", type: "content", contentType: "divider" },
+        { id: "spacer", type: "content", contentType: "spacer", props: { size: "large" } },
+        { id: "name", type: "field", fieldType: "text", name: "name", label: "Name" },
+        { id: "ending", type: "ending", label: "Thanks", description: "Your response is in." }
+      ]
+    };
+
+    const { container } = render(<FormRenderer schema={schema} onSubmit={onSubmit} />);
+
+    expect(screen.getByRole("heading", { name: "Welcome" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Profile", level: 3 })).toBeTruthy();
+    expect(screen.getByText("Tell us who should receive updates.")).toBeTruthy();
+    expect(screen.getByRole("img", { name: "Team banner" })).toHaveAttribute("src", "https://example.test/banner.png");
+    expect(screen.getByText("Our team")).toBeTruthy();
+    expect(container.querySelector(".rfb-content-divider")).toBeTruthy();
+    expect(container.querySelector(".rfb-content-spacer")).toHaveAttribute("data-rfb-spacer-size", "large");
+
+    await user.type(screen.getByLabelText("Name"), "Jane");
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit.mock.calls[0]?.[0]?.data).toEqual({ name: "Jane" });
+    expect(screen.getByRole("heading", { name: "Thanks" })).toBeTruthy();
+    expect(screen.getByText("Your response is in.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Submit" })).toBeNull();
+  });
+
   it("maps normalized backend errors to fields and global messages", async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn(async (_envelope: SubmissionEnvelope): Promise<BackendResponse> => ({
@@ -255,6 +315,26 @@ describe("FormRenderer", () => {
     expect(await screen.findByText("Use a work email.")).toBeTruthy();
     expect(screen.getByText("Submission blocked.")).toBeTruthy();
     expect(screen.getByLabelText("Email")).toHaveFocus();
+  });
+
+  it("uses Persian runtime strings and RTL direction by locale", async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <FormRenderer
+        schema={{
+          ...baseSchema,
+          locale: "fa-IR",
+          direction: "rtl",
+          title: "فرم تماس",
+          nodes: [{ id: "name", type: "field", fieldType: "text", name: "name", label: "نام" }]
+        }}
+      />
+    );
+
+    expect(container.querySelector(".rfb-form")).toHaveAttribute("dir", "rtl");
+    expect(screen.getByRole("button", { name: "ارسال" })).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "ارسال" }));
+    expect(await screen.findByText("پاسخ شما ثبت شد.")).toBeTruthy();
   });
 
   it("submits through normalized adapter results", async () => {

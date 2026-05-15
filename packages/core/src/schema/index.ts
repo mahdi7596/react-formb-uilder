@@ -67,7 +67,7 @@ export interface ContainerNode extends BaseNode {
 
 export interface ContentNode extends BaseNode {
   type: "content";
-  contentType: "heading" | "paragraph" | "image" | "divider" | string;
+  contentType: "heading" | "paragraph" | "image" | "divider" | "spacer" | "welcome" | string;
   props?: JsonObject;
 }
 
@@ -182,11 +182,28 @@ export function analyzeSchema(schema: unknown): SchemaAnalysisResult {
 
     if (rawNode.type === "field" || rawNode.type === "hidden") {
       collectFieldDiagnostics(rawNode, fieldsByPath, diagnostics, schemaRegisteredValidators);
+    } else if (rawNode.type === "content" || rawNode.type === "ending") {
+      collectContentDiagnostics(rawNode, diagnostics);
     }
   }
 
   collectConditionDiagnostics(nodes, fieldsByPath, diagnostics);
   return { diagnostics: dedupeDiagnostics(diagnostics), nodesById, fieldsByPath };
+}
+
+function collectContentDiagnostics(node: Record<string, unknown>, diagnostics: Diagnostic[]): void {
+  const props = isRecord(node.props) ? node.props : {};
+  const contentType = node.type === "ending" ? "ending" : node.contentType;
+  if (contentType === "image" && !hasNonEmptyText(props.alt)) {
+    addDiagnostic(diagnostics, DIAGNOSTIC_CODES.missingAccessibleContent, String(node.id ?? "image"));
+  }
+  if ((contentType === "heading" || contentType === "welcome" || contentType === "ending") && !hasReadableContent(node, props)) {
+    addDiagnostic(diagnostics, DIAGNOSTIC_CODES.missingAccessibleContent, String(node.id ?? contentType));
+  }
+}
+
+function hasReadableContent(node: Record<string, unknown>, props: Record<string, unknown>): boolean {
+  return hasNonEmptyText(node.label) || hasNonEmptyText(node.description) || hasNonEmptyText(props.text) || hasNonEmptyText(props.title);
 }
 
 function collectFieldDiagnostics(
@@ -299,6 +316,10 @@ function readRegisteredValidators(node: Record<string, unknown>): Set<string> {
 function hasUploadLifecycle(node: Record<string, unknown>): boolean {
   const props = isRecord(node.props) ? node.props : {};
   return "uploadLifecycle" in props || "prepareUpload" in props || "finalizeUpload" in props;
+}
+
+function hasNonEmptyText(value: unknown): boolean {
+  return typeof value === "string" && value.trim().length > 0;
 }
 
 function addDangerDiagnostics(value: unknown, diagnostics: Diagnostic[]): void {

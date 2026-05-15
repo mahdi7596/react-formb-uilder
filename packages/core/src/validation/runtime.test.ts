@@ -38,7 +38,28 @@ describe("validation runtime", () => {
     ).toEqual([]);
     expect(
       validateFieldValue({ fieldType: "text", value: "", rules: [{ type: "required" }], disabled: true })
-        .errors
+      .errors
     ).toEqual([]);
+  });
+
+  it("applies conditional requiredness only when its condition is true", () => {
+    const rules = [{ type: "required", when: { field: "plan", op: "eq" as const, value: "enterprise" } }];
+
+    expect(
+      validateFieldValue({ fieldType: "text", value: "", rules, values: { plan: "starter" } }).errors
+    ).toEqual([]);
+    expect(
+      validateFieldValue({ fieldType: "text", value: "", rules, values: { plan: "enterprise" } }).errors[0]?.code
+    ).toBe("required");
+  });
+
+  it("returns diagnostics for unsupported conditional validation predicates", () => {
+    expect(
+      validateFieldValue({
+        fieldType: "text",
+        value: "",
+        rules: [{ type: "required", when: { predicate: "isBusiness", version: "1.0.0", args: ["email"] } }]
+      }).diagnostics.map((item) => item.code)
+    ).toContain("unsupported_custom_registration");
   });
 });

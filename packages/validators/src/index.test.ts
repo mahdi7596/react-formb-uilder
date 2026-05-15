@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { compileJsonSchema, createBuilderArtifactBundle } from "./index.js";
+import {
+  compileJsonSchema,
+  createBuilderArtifactBundle,
+  iranValidatorRegistrations,
+  isIranMobile,
+  isIranNationalId,
+  isIranPostalCode,
+  normalizePersianArabicDigits
+} from "./index.js";
 import type { JsonSchemaObject } from "./json-schema/index.js";
 
 const baseSchema = {
@@ -43,6 +51,30 @@ describe("json schema compiler", () => {
     });
     expect(result.diagnostics).toEqual([]);
   });
+
+  it("ignores supported content and layout nodes when generating submitted-data schema", () => {
+    const result = compileJsonSchema({
+      ...baseSchema,
+      nodes: [
+        { id: "welcome", type: "content", contentType: "welcome", label: "Welcome" },
+        { id: "heading", type: "content", contentType: "heading", label: "Details" },
+        { id: "paragraph", type: "content", contentType: "paragraph", props: { text: "Read this first." } },
+        { id: "image", type: "content", contentType: "image", props: { src: "https://example.test/image.png", alt: "Illustration" } },
+        { id: "divider", type: "content", contentType: "divider" },
+        { id: "spacer", type: "content", contentType: "spacer" },
+        { id: "section", type: "section", label: "Contact", children: ["email"] },
+        { id: "step", type: "step", label: "Page one", children: ["email"] },
+        { id: "ending", type: "ending", label: "Thanks" },
+        { id: "email", type: "field", fieldType: "email", name: "email" }
+      ]
+    });
+
+    expect(rootProperties(result.schema)).toEqual({
+      email: { type: "string", format: "email" }
+    });
+    expect(result.diagnostics).toEqual([]);
+  });
+
 
   it("maps MVP field types and validation rules", () => {
     const result = compileJsonSchema({
@@ -233,5 +265,33 @@ describe("json schema compiler", () => {
     expect(new Set(result.fixtureReferences.map((reference) => reference.category))).toEqual(
       new Set(["schema", "compiler-diagnostic"])
     );
+  });
+});
+
+describe("Iran regional validators", () => {
+  it("normalizes Persian and Arabic digits", () => {
+    expect(normalizePersianArabicDigits("۰۱۲۳۴۵۶۷۸۹")).toBe("0123456789");
+    expect(normalizePersianArabicDigits("٠١٢٣٤٥٦٧٨٩")).toBe("0123456789");
+  });
+
+  it("validates Iran mobile, national id, and postal code values", () => {
+    expect(isIranMobile("۰۹۱۲۳۴۵۶۷۸۹")).toBe(true);
+    expect(isIranMobile("+989123456789")).toBe(true);
+    expect(isIranMobile("02112345678")).toBe(false);
+
+    expect(isIranNationalId("۰۰۱۰۳۵۰۸۲۹")).toBe(true);
+    expect(isIranNationalId("1111111111")).toBe(false);
+
+    expect(isIranPostalCode("۱۴۶۷۸۹۳۵۷۱")).toBe(true);
+    expect(isIranPostalCode("0123456789")).toBe(false);
+  });
+
+  it("exports registered validator keys for host parity", () => {
+    expect(iranValidatorRegistrations.map((item) => item.key)).toEqual([
+      "custom:ir.mobile",
+      "custom:ir.nationalId",
+      "custom:ir.postalCode"
+    ]);
+    expect(iranValidatorRegistrations[0]?.validate("09123456789")).toBeNull();
   });
 });

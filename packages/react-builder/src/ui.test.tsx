@@ -115,6 +115,18 @@ describe("BuilderWorkspace shell", () => {
     expect(document.querySelector(".rfb-builder")).toHaveAttribute("dir", "rtl");
   });
 
+  it("uses Persian builder strings in RTL mode while technical values remain LTR", () => {
+    render(<BuilderWorkspace schema={{ ...populatedSchema, locale: "fa-IR", direction: "rtl" }} />);
+
+    expect(screen.getByText("اجزای فرم")).toBeInTheDocument();
+    expect(screen.getByLabelText("جستجوی اجزا")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "ذخیره پیش‌نویس" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "انتشار" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "اعتبارسنجی" })).toBeInTheDocument();
+    expect(document.querySelector(".rfb-builder")).toHaveAttribute("dir", "rtl");
+    expect(screen.getByText("email")).toHaveAttribute("dir", "ltr");
+  });
+
   it("supports preview toggle and restores edit canvas", async () => {
     const user = userEvent.setup();
     render(<BuilderWorkspace schema={populatedSchema} />);
@@ -186,6 +198,16 @@ describe("builder palette and canvas", () => {
     expect(screen.queryByRole("button", { name: "Add Number" })).not.toBeInTheDocument();
 
     await user.clear(screen.getByLabelText("Search components"));
+    expect(screen.getByRole("button", { name: "Add URL" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add Checkbox group" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add Switch" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add Time" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add Rating" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add Linear scale" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add Hidden field" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add Read-only value" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add File metadata" })).toBeInTheDocument();
+
     await user.type(screen.getByLabelText("Search components"), "zzzz");
     expect(screen.getByText("No components found")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Clear search" }));
@@ -229,7 +251,7 @@ describe("builder palette and canvas", () => {
     expect(screen.getByRole("button", { name: "Work email" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Work email" }));
-    const inline = screen.getByLabelText("Inline field label");
+    const inline = screen.getByLabelText("Inline node label");
     await user.clear(inline);
     await user.type(inline, "Primary email");
     fireEvent.blur(inline);
@@ -240,6 +262,47 @@ describe("builder palette and canvas", () => {
 
     await user.click(screen.getAllByRole("button", { name: "Delete field" })[0] as HTMLElement);
     expect(screen.getAllByText("Deleting a submittable field can break stored responses.").length).toBeGreaterThan(0);
+  });
+
+  it("adds and edits content, layout, and ending blocks as real canvas nodes", async () => {
+    const user = userEvent.setup();
+    render(<BuilderWorkspace schema={emptySchema} />);
+
+    expect(screen.getByRole("button", { name: "Add Heading" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add Paragraph" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add Image" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add Divider" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add Spacer" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add Welcome screen" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add Section" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add Page / step" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add Ending screen" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Add Heading" }));
+    expect(screen.getByRole("article", { name: "Content block Heading" })).toBeInTheDocument();
+    await user.clear(screen.getByLabelText("Label"));
+    await user.type(screen.getByLabelText("Label"), "Personal information");
+    await user.selectOptions(screen.getByLabelText("Heading level"), "2");
+    expect(screen.getByRole("button", { name: "Personal information" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Add Paragraph" }));
+    await user.clear(screen.getByLabelText("Body text"));
+    await user.type(screen.getByLabelText("Body text"), "Use accurate details.");
+    expect(screen.getByDisplayValue("Use accurate details.")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Add Image" }));
+    await user.type(screen.getByLabelText("Image URL"), "https://example.test/banner.png");
+    await user.type(screen.getByLabelText("Alt text"), "Team banner");
+    await user.type(screen.getByLabelText("Caption"), "Our team");
+    expect(screen.getByDisplayValue("Team banner")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: "Data" }));
+    expect(screen.getByText("This block does not create submitted data.")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Submitted path")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Add Ending screen" }));
+    expect(screen.getByRole("article", { name: "Ending Thank you" })).toBeInTheDocument();
+    expect(screen.getByText("Thank-you ending screen")).toBeInTheDocument();
   });
 });
 
@@ -253,13 +316,22 @@ describe("builder inspector", () => {
     await user.type(screen.getByLabelText("Description"), "Choose the subscription plan.");
     expect(screen.getByDisplayValue("Choose the subscription plan.")).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("Options"), {
-      target: { value: "Starter=starter\nEnterprise=enterprise" }
-    });
-    const optionsValue = (screen.getByLabelText("Options") as HTMLTextAreaElement).value;
-    expect(optionsValue).toContain("Starter=starter");
-    expect(optionsValue).toContain("Enterprise=enterprise");
+    await user.clear(screen.getByLabelText("Option 1 label"));
+    await user.type(screen.getByLabelText("Option 1 label"), "Starter");
+    await user.clear(screen.getByLabelText("Option 1 submitted value"));
+    await user.type(screen.getByLabelText("Option 1 submitted value"), "starter");
     expect(screen.getAllByText("Changing option values can break stored responses.").length).toBeGreaterThan(0);
+
+    await user.click(screen.getAllByLabelText("Default", { selector: "input" })[0] as HTMLElement);
+    await user.click(screen.getAllByLabelText("Disabled", { selector: "input" })[0] as HTMLElement);
+    await user.click(screen.getByRole("button", { name: "Duplicate option 1" }));
+    expect(screen.getByDisplayValue("Starter copy")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Move option 2 up" }));
+    await user.click(screen.getByRole("button", { name: "Delete option 2" }));
+    await user.type(screen.getByLabelText("Bulk add options"), "Team=team\nEnterprise=enterprise");
+    await user.click(screen.getByRole("button", { name: "Add pasted options" }));
+    expect(screen.getByDisplayValue("Team")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("enterprise")).toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: "Validation" }));
     const required = screen.getByLabelText("Required field");
@@ -267,14 +339,17 @@ describe("builder inspector", () => {
     expect(required).toBeChecked();
 
     await user.click(screen.getByRole("tab", { name: "Logic" }));
-    fireEvent.change(screen.getByLabelText("Visibility condition JSON"), {
-      target: { value: "{\"field\":\"email\",\"op\":\"notEmpty\"}" }
-    });
-    expect((screen.getByLabelText("Visibility condition JSON") as HTMLTextAreaElement).value).toContain("\"field\": \"email\"");
+    await user.selectOptions(screen.getByLabelText("Visibility behavior"), "showWhen");
+    await user.selectOptions(screen.getAllByLabelText("Operator")[0] as HTMLElement, "notEmpty");
+    expect(screen.getByLabelText("Read-only condition JSON").textContent).toContain("\"field\": \"email\"");
+    expect(screen.getByLabelText("Read-only condition JSON").textContent).toContain("\"op\": \"notEmpty\"");
+
+    await user.click(screen.getByLabelText("Require only when conditions match"));
+    expect(screen.getByLabelText("Read-only condition JSON").textContent).toContain("\"requiredWhen\"");
 
     await user.click(screen.getByRole("tab", { name: "Accessibility" }));
-    await user.clear(screen.getByLabelText("Helper text"));
-    await user.type(screen.getByLabelText("Helper text"), "Screen-reader friendly help.");
+    await user.clear(screen.getByLabelText("Description"));
+    await user.type(screen.getByLabelText("Description"), "Screen-reader friendly help.");
     expect(screen.getByDisplayValue("Screen-reader friendly help.")).toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: "Data" }));

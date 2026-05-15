@@ -17,22 +17,107 @@ test("creator can add, edit, diagnose, and preview a simple form", async ({ page
 
   await page.getByRole("button", { name: "Add Email" }).click();
   await expect(page.getByRole("button", { name: "Email", exact: true })).toBeVisible();
-  await page.getByRole("textbox", { name: "Label", exact: true }).fill("Work email");
+  await page.getByRole("textbox", { name: /Label|برچسب/, exact: true }).fill("Work email");
   await expect(page.getByRole("button", { name: "Work email", exact: true })).toBeVisible();
 
-  await page.getByRole("tab", { name: "Data" }).click();
-  await page.getByLabel("Submitted path").fill("__proto__.polluted");
+  await page.getByRole("tab", { name: /Data|داده/ }).click();
+  await page.getByLabel(/Submitted path|مسیر ارسالی/).fill("__proto__.polluted");
   await expect(page.getByText("Submitted path is invalid or unsafe.").first()).toBeVisible();
 
-  await page.getByLabel("Submitted path").fill("workEmail");
-  await page.getByRole("button", { name: "Preview" }).click();
+  await page.getByLabel(/Submitted path|مسیر ارسالی/).fill("workEmail");
+  await page.getByRole("button", { name: /Preview|پیش‌نمایش/ }).click();
   await expect(page.getByRole("region", { name: "Form preview" })).toBeVisible();
   await expect(page.getByLabel("Work email")).toBeVisible();
   await page.getByLabel("Work email").fill("creator@example.com");
-  await page.getByRole("button", { name: "Edit" }).click();
+  await page.getByRole("button", { name: /Edit|ویرایش/ }).click();
   await expect(page.getByRole("button", { name: "Work email", exact: true })).toBeVisible();
 
   expect(consoleErrors).toEqual([]);
+});
+
+test("creator can author dropdown options with structured controls and preview them", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Add Dropdown" }).click();
+  await expect(page.getByRole("button", { name: "Dropdown", exact: true })).toBeVisible();
+  await page.getByRole("textbox", { name: /Label|برچسب/, exact: true }).fill("Plan");
+
+  await page.getByLabel("Option 1 label").fill("Starter");
+  await page.getByLabel("Option 1 submitted value").fill("starter");
+  await page.getByLabel("Option 2 label").fill("Growth");
+  await page.getByLabel("Option 2 submitted value").fill("growth");
+  await page.getByRole("button", { name: "Add option" }).click();
+  await page.getByLabel("Option 3 label").fill("Enterprise");
+  await page.getByLabel("Option 3 submitted value").fill("enterprise");
+  await page.getByRole("button", { name: "Move option 3 up" }).click();
+  await page.getByLabel("Bulk add options").fill("Agency=agency\nInternal=internal");
+  await page.getByRole("button", { name: "Add pasted options" }).click();
+  await expect(page.locator("input[value='Agency']")).toBeVisible();
+  await expect(page.locator("input[value='internal']")).toBeVisible();
+
+  await page.getByRole("button", { name: /Preview|پیش‌نمایش/ }).click();
+  const planSelect = page.getByLabel("Plan");
+  await expect(planSelect).toBeVisible();
+  await expect(planSelect).toContainText("Starter");
+  await expect(planSelect).toContainText("Enterprise");
+  await expect(planSelect).toContainText("Agency");
+});
+
+test("creator can author content and layout blocks then preview the real renderer", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Add Welcome screen" }).click();
+  await page.getByRole("textbox", { name: /Label|برچسب/, exact: true }).fill("Welcome to intake");
+  await page.getByLabel(/Description|توضیح/).fill("This form collects the details we need.");
+
+  await page.getByRole("button", { name: "Add Heading" }).click();
+  await page.getByRole("textbox", { name: /Label|برچسب/, exact: true }).fill("Contact details");
+  await page.getByLabel("Heading level").selectOption("2");
+
+  await page.getByRole("button", { name: "Add Paragraph" }).click();
+  await page.getByLabel("Body text").fill("Use an email address that you check regularly.");
+
+  await page.getByRole("button", { name: "Add Image" }).click();
+  await page.getByLabel("Image URL").fill("https://example.test/banner.png");
+  await page.getByLabel("Alt text").fill("Team banner");
+  await page.getByLabel("Caption").fill("Our support team");
+
+  await page.getByRole("tab", { name: /Data|داده/ }).click();
+  await expect(page.getByText("This block does not create submitted data.")).toBeVisible();
+  await expect(page.getByLabel(/Submitted path|مسیر ارسالی/)).toBeHidden();
+
+  await page.getByRole("button", { name: "Add Ending screen" }).click();
+  await page.getByRole("textbox", { name: /Label|برچسب/, exact: true }).fill("Request received");
+
+  await page.getByRole("button", { name: /Preview|پیش‌نمایش/ }).click();
+  await expect(page.getByRole("region", { name: "Form preview" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Welcome to intake" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Contact details", level: 2 })).toBeVisible();
+  await expect(page.getByText("Use an email address that you check regularly.")).toBeVisible();
+  await expect(page.getByRole("img", { name: "Team banner" })).toBeVisible();
+  await expect(page.getByText("Our support team")).toBeVisible();
+});
+
+test("creator can build validation and simple logic without writing JSON", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Full name", exact: true }).click();
+  await page.getByRole("tab", { name: /Validation|اعتبارسنجی/ }).click();
+  await page.getByLabel("Minimum characters").fill("2");
+  await page.getByLabel("Maximum characters").fill("80");
+  await expect(page.getByLabel("Minimum characters")).toHaveValue("2");
+  await expect(page.getByLabel("Maximum characters")).toHaveValue("80");
+
+  await page.getByRole("button", { name: "Add Email" }).click();
+  await page.getByRole("textbox", { name: /Label|برچسب/, exact: true }).fill("Work email");
+  await page.getByRole("tab", { name: /Logic|منطق/ }).click();
+  await page.getByLabel(/Visibility behavior/).selectOption("showWhen");
+  await page.getByLabel("Operator").selectOption("notEmpty");
+  await expect(page.getByLabel("Read-only condition JSON")).toContainText('"op": "notEmpty"');
+
+  await page.getByLabel("Require only when conditions match").check();
+  await expect(page.getByLabel("Read-only condition JSON")).toContainText('"requiredWhen"');
+  await expect(page.getByText("Phase 16 supports show, hide, and conditional requiredness.")).toBeVisible();
 });
 
 test("creator can drag from palette, reorder canvas, and undo redo drag edits", async ({ page, isMobile }) => {
@@ -110,6 +195,6 @@ test("mobile viewport exposes quick-edit friendly stacked layout", async ({ page
   await expect(page.getByRole("region", { name: "Component palette" })).toBeVisible();
   await expect(page.getByRole("region", { name: "Form canvas" })).toBeVisible();
   await expect(page.getByRole("region", { name: "Inspector" })).toBeVisible();
-  await page.getByRole("button", { name: "Preview" }).click();
+  await page.getByRole("button", { name: /Preview|پیش‌نمایش/ }).click();
   await expect(page.getByRole("region", { name: "Form preview" })).toBeVisible();
 });

@@ -1,8 +1,6 @@
 ## Purpose
 Define the developer onboarding documentation expected for the backend-agnostic React form builder so new developers, host integrators, backend implementers, and future agents can find the current product contracts without phase-history archaeology.
-
 ## Requirements
-
 ### Requirement: Root developer onboarding entry point
 The project SHALL provide a root onboarding document that explains the product, current MVP status, package map, setup commands, verification commands, and next documentation paths for a new developer or future agent.
 
@@ -58,3 +56,11 @@ The documentation onboarding phase SHALL produce a report for owner review befor
 #### Scenario: Report records validation limits
 - **WHEN** documentation link checking or OpenSpec strict validation is not fully available because of existing project limitations
 - **THEN** the phase report records the exact limitation and what verification was run instead
+
+### Requirement: Phase 19 Production Examples
+
+The documentation and examples SHALL show realistic production form-builder usage rather than toy-only forms.
+
+#### Scenario: Production templates are documented
+- **WHEN** a developer opens the Vite example or integration docs
+- **THEN** they can inspect realistic English and Persian templates, structured options, visual logic, renderer-only embed usage, and owner review instructions

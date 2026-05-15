@@ -20,7 +20,7 @@ import {
 } from "./fakeBackend.js";
 import { examples, type ExampleMode } from "./schemas.js";
 
-const modeOrder: ExampleMode[] = ["single", "validation", "multi", "rtl"];
+const modeOrder: ExampleMode[] = ["intake", "persian", "multi", "logic", "embed"];
 const scenarioOrder: BackendScenario[] = ["success", "validation_error", "conflict", "auth_error", "rate_limited", "server_error"];
 
 const scenarioLabels: Record<BackendScenario, string> = {
@@ -33,17 +33,128 @@ const scenarioLabels: Record<BackendScenario, string> = {
 };
 
 export function App() {
-  const [mode, setMode] = useState<ExampleMode>("single");
+  const [path, setPath] = useState(() => window.location.pathname);
+
+  useEffect(() => {
+    const onPopState = () => setPath(window.location.pathname);
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  return path.startsWith("/examples") ? <ExamplesPage /> : <BuilderPage />;
+}
+
+function BuilderPage() {
+  const [builderSchema, setBuilderSchema] = useState<BuilderSchema>(() => draftBuilderSchema(examples.persian.schema));
+  const [persistenceState, setPersistenceState] = useState<BuilderPersistenceState>(() => createPersistenceState("idle"));
+  const [latestPublished, setLatestPublished] = useState<PublishedRevisionMetadata | null>(null);
+
+  const fakeHost = useMemo(() => createFakePersistenceHost(draftBuilderSchema(examples.persian.schema) as CanonicalFormSchema), []);
+  const artifactBundle = useMemo(() => createBuilderArtifactBundle(builderSchema, { generatedAt: "deterministic" }), [builderSchema]);
+  const publishChecklist = useMemo(
+    () => buildPublishChecklist({ schema: builderSchema, artifactBundle, latestPublished }),
+    [artifactBundle, builderSchema, latestPublished]
+  );
+
+  const saveDraft = useCallback(async (currentSchema: BuilderSchema = builderSchema) => {
+    setPersistenceState(createPersistenceState("saving"));
+    const result = await fakeHost.adapter.saveDraft({
+      formId: currentSchema.formId,
+      schema: currentSchema as CanonicalFormSchema,
+      draft: {
+        draftId: "draft_builder_root_001",
+        revisionId: currentSchema.revisionId,
+        revisionHash: currentSchema.revisionHash
+      }
+    });
+    if (result.ok) {
+      setBuilderSchema(result.data.schema as BuilderSchema);
+      setPersistenceState(createPersistenceState("saved", {
+        draft: result.data.draft,
+        lastSavedAt: result.data.savedAt,
+        message: "پیش‌نویس در میزبان نمونه ذخیره شد."
+      }));
+      return;
+    }
+    setPersistenceState(createPersistenceState(result.status === "conflict" ? "conflicted" : "failed", {
+      diagnostics: result.diagnostics,
+      ...(result.message ? { message: result.message } : {}),
+      canReload: result.conflict?.canReload ?? false,
+      canRetry: result.conflict?.canRetry ?? true
+    }));
+  }, [builderSchema, fakeHost]);
+
+  const publishRevision = useCallback(async (currentSchema: BuilderSchema = builderSchema) => {
+    const result = await fakeHost.adapter.publishRevision({
+      formId: currentSchema.formId,
+      schema: currentSchema as CanonicalFormSchema,
+      draft: {
+        draftId: "draft_builder_root_001",
+        revisionId: currentSchema.revisionId,
+        revisionHash: currentSchema.revisionHash
+      }
+    });
+    if (result.ok) {
+      setBuilderSchema(result.data.schema as BuilderSchema);
+      setLatestPublished(result.data.published);
+      setPersistenceState(createPersistenceState("saved", {
+        message: `نسخه ${result.data.published.revisionId} منتشر شد.`,
+        lastSavedAt: result.data.published.publishedAt
+      }));
+      return;
+    }
+    setPersistenceState(createPersistenceState(result.status === "conflict" ? "conflicted" : "failed", {
+      diagnostics: result.diagnostics,
+      ...(result.message ? { message: result.message } : {})
+    }));
+  }, [builderSchema, fakeHost]);
+
+  return (
+    <main className="builder-shell" dir="rtl" lang="fa-IR">
+      <style>{createDefaultThemeStyles({ selector: ":root" })}</style>
+      <header className="builder-product-header">
+        <div>
+          <p className="eyebrow">فرم‌ساز</p>
+          <h1>ساخت و انتشار فرم</h1>
+          <p>فرم را با بلوک‌های محتوایی، فیلدها، اعتبارسنجی، منطق، پیش‌نمایش، ذخیره پیش‌نویس و بررسی انتشار بسازید.</p>
+        </div>
+        <nav aria-label="Builder navigation">
+          <a className="nav-link" href="/examples">مشاهده نمونه‌ها</a>
+        </nav>
+      </header>
+      <section className="builder-product-workspace" aria-label="Form builder workspace">
+        <BuilderWorkspace
+          className="builder-theme-override"
+          direction="rtl"
+          locale="fa-IR"
+          schema={builderSchema}
+          persistenceState={persistenceState}
+          publishChecklist={publishChecklist}
+          artifactBundle={artifactBundle}
+          latestPublishedRevision={latestPublished}
+          onSaveDraft={saveDraft}
+          onRetrySave={saveDraft}
+          onReloadLatest={() => setPersistenceState(createPersistenceState("loading", { message: "بارگذاری مجدد در میزبان نمونه شبیه‌سازی شد." }))}
+          onPreserveLocalEdits={() => setPersistenceState(createPersistenceState("dirty", { message: "ویرایش‌های محلی حفظ شد." }))}
+          onPublish={publishRevision}
+        />
+      </section>
+    </main>
+  );
+}
+
+function ExamplesPage() {
+  const [mode, setMode] = useState<ExampleMode>("intake");
   const [scenario, setScenario] = useState<BackendScenario>("success");
   const [lastEnvelope, setLastEnvelope] = useState<SubmissionEnvelope | null>(null);
   const [lastResponse, setLastResponse] = useState<BackendResponse | null>(null);
-  const [builderSchema, setBuilderSchema] = useState<BuilderSchema>(() => draftBuilderSchema(examples.single.schema));
+  const [builderSchema, setBuilderSchema] = useState<BuilderSchema>(() => draftBuilderSchema(examples.intake.schema));
   const [persistenceState, setPersistenceState] = useState<BuilderPersistenceState>(() => createPersistenceState("idle"));
   const [latestPublished, setLatestPublished] = useState<PublishedRevisionMetadata | null>(null);
 
   const example = examples[mode];
   const fakeHost = useMemo(() => createFakePersistenceHost(draftBuilderSchema(example.schema) as CanonicalFormSchema), [example.schema]);
-  const activeScenario = mode === "validation" && scenario === "success" ? "validation_error" : scenario;
+  const activeScenario = scenario;
   const direction = example.schema.direction === "rtl" ? "rtl" : "ltr";
   const artifactBundle = useMemo(() => createBuilderArtifactBundle(builderSchema, { generatedAt: "deterministic" }), [builderSchema]);
   const publishChecklist = useMemo(
@@ -57,9 +168,6 @@ export function App() {
     setBuilderSchema(draftBuilderSchema(example.schema));
     setPersistenceState(createPersistenceState("idle"));
     setLatestPublished(null);
-    if (mode === "validation") {
-      setScenario("validation_error");
-    }
   }, [example.schema, mode]);
 
   const handleSubmit = useMemo(
@@ -145,13 +253,16 @@ export function App() {
       <style>{createDefaultThemeStyles({ selector: ":root" })}</style>
       <header className="example-header">
         <div>
-          <p className="eyebrow">Phase 6 renderer proof</p>
-          <h1>Vite React renderer example</h1>
+          <p className="eyebrow">Production templates</p>
+          <h1>React form builder examples</h1>
           <p>
-            A host-style app that renders canonical published schemas with the real
-            <code> FormRenderer</code>, fake backend responses, and browser-testable output.
+            Realistic form-builder templates rendered from canonical schemas, with builder preview,
+            Persian RTL output, structured options, visual logic, and renderer-only embedding.
           </p>
         </div>
+        <nav aria-label="Example navigation">
+          <a className="nav-link" href="/">Open builder</a>
+        </nav>
       </header>
 
       <section className="mode-bar" aria-label="Example modes">
@@ -169,34 +280,44 @@ export function App() {
       </section>
 
       <div className="workspace">
-        <section className="builder-panel" aria-labelledby="builder-example-title">
-          <div className="example-context">
-            <p className="eyebrow">Phase 10 builder persistence</p>
-            <h2 id="builder-example-title">Builder save and publish workflow</h2>
-            <p>Fake host persistence exercises draft save, conflict recovery, publish gating, revision review, and generated artifacts.</p>
-          </div>
-          <div className="builder-actions">
-            <button type="button" onClick={forceSaveConflict}>Simulate save conflict</button>
-            <button type="button" onClick={forcePublishConflict}>Simulate publish conflict</button>
-          </div>
-          <BuilderWorkspace
-            className="builder-theme-override"
-            schema={builderSchema}
-            persistenceState={persistenceState}
-            publishChecklist={publishChecklist}
-            artifactBundle={artifactBundle}
-            latestPublishedRevision={latestPublished}
-            onSaveDraft={saveDraft}
-            onRetrySave={saveDraft}
-            onReloadLatest={() => setPersistenceState(createPersistenceState("loading", { message: "Reload simulated by the fake host." }))}
-            onPreserveLocalEdits={() => setPersistenceState(createPersistenceState("dirty", { message: "Local edits preserved." }))}
-            onPublish={publishRevision}
-          />
-        </section>
+        {example.builderEnabled ? (
+          <section className="builder-panel" aria-labelledby="builder-example-title">
+            <div className="example-context">
+              <p className="eyebrow">Authoring workspace</p>
+              <h2 id="builder-example-title">Builder save, preview, and publish workflow</h2>
+              <p>This template can be edited, previewed through the real renderer, saved as a draft, and published through fake host contracts.</p>
+            </div>
+            <div className="builder-actions">
+              <button type="button" onClick={forceSaveConflict}>Simulate save conflict</button>
+              <button type="button" onClick={forcePublishConflict}>Simulate publish conflict</button>
+            </div>
+            <BuilderWorkspace
+              className="builder-theme-override"
+              schema={builderSchema}
+              persistenceState={persistenceState}
+              publishChecklist={publishChecklist}
+              artifactBundle={artifactBundle}
+              latestPublishedRevision={latestPublished}
+              onSaveDraft={saveDraft}
+              onRetrySave={saveDraft}
+              onReloadLatest={() => setPersistenceState(createPersistenceState("loading", { message: "Reload simulated by the fake host." }))}
+              onPreserveLocalEdits={() => setPersistenceState(createPersistenceState("dirty", { message: "Local edits preserved." }))}
+              onPublish={publishRevision}
+            />
+          </section>
+        ) : (
+          <section className="builder-panel renderer-only-note" aria-labelledby="renderer-only-title">
+            <div className="example-context">
+              <p className="eyebrow">Renderer-only embed</p>
+              <h2 id="renderer-only-title">Public form embed without builder UI</h2>
+              <p>This mode mounts only <code>FormRenderer</code>, which is how a host app can embed a published form on a public page.</p>
+            </div>
+          </section>
+        )}
 
         <section className="form-panel" aria-labelledby="active-example-title" dir={direction}>
           <div className="example-context">
-            <p className="eyebrow">Current mode</p>
+            <p className="eyebrow">Live respondent output</p>
             <h2 id="active-example-title">{example.label}</h2>
             <p>{example.description}</p>
           </div>

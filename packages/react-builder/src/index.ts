@@ -18,9 +18,11 @@ export interface BuilderNode extends Record<string, unknown> {
   id: string;
   type: string;
   fieldType?: string;
+  contentType?: string;
   name?: string;
   label?: string;
   children?: string[];
+  props?: Record<string, unknown>;
   options?: BuilderOption[];
   validation?: BuilderValidationRule[];
   visibility?: unknown;
@@ -604,6 +606,9 @@ function cloneNode(node: BuilderNode): BuilderNode {
 }
 
 function clone<T>(value: T): T {
+  if (value === undefined) {
+    return value;
+  }
   return JSON.parse(JSON.stringify(value)) as T;
 }
 

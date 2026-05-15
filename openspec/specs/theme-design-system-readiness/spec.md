@@ -1,8 +1,6 @@
 ## Purpose
 Define optional starter theme tokens, CSS variable contracts, default renderer and builder theme helpers, accessibility styling, RTL/LTR styling, and verification expectations without making core behavior or host applications depend on the theme package.
-
 ## Requirements
-
 ### Requirement: Optional theme package exports
 The themes package SHALL export optional starter theme tokens, CSS variable helpers, and default CSS helpers without making host applications or core behavior depend on the theme package.
 
@@ -126,3 +124,38 @@ The project SHALL verify the default theme package and rendered themed examples 
 #### Scenario: Phase report records theme decisions
 - **WHEN** Phase 11 implementation is complete
 - **THEN** `docs/reports/2026-05-15-phase-11-theme-design-system-readiness.md` summarizes changed files, token contracts, CSS helpers, UI evidence, commands run, known limitations, and owner review checklist
+
+### Requirement: Optional Persian typography assets
+The themes package SHALL support optional Persian/RTL typography assets without requiring hosts or core contracts to use a specific font.
+
+#### Scenario: IranYekan assets remain theme-owned
+- **WHEN** IranYekan font files are included in the repository
+- **THEN** they live under `packages/themes/assets/fonts/iranyekan/` or another theme-owned asset path rather than the repository root or `packages/core`
+
+#### Scenario: Font-face helper is optional
+- **WHEN** the themes package exposes IranYekan or Persian font CSS helpers
+- **THEN** hosts can opt into those helpers without changing canonical schema behavior, renderer semantics, validation, or backend contracts
+
+### Requirement: Product-grade RTL theme behavior
+The default theme SHALL support product-grade RTL and LTR behavior for builder and renderer surfaces.
+
+#### Scenario: Direction-aware theme styles preserve readability
+- **WHEN** builder or renderer surfaces are displayed in RTL with Persian text
+- **THEN** layout, spacing, icons, focus states, option rows, inspector controls, validation messages, and field chrome remain readable and avoid incoherent overlap
+
+#### Scenario: Technical values stay LTR
+- **WHEN** submitted paths, option values, schema ids, revision ids, URLs, email addresses, code, or JSON-like artifacts appear inside RTL screens
+- **THEN** theme styles provide hooks for those values to remain LTR and readable
+
+### Requirement: Optional IranYekan theme helper
+
+The themes package SHALL expose an optional IranYekan `@font-face` CSS helper that uses package-owned font assets and does not force host applications to adopt the font.
+
+#### Scenario: Host opts into IranYekan
+- **WHEN** a host calls the IranYekan theme helper
+- **THEN** the generated CSS references `packages/themes/assets/fonts/iranyekan/` asset paths
+- **AND** maps the font to the RTL font token without changing core behavior
+
+#### Scenario: Host does not opt in
+- **WHEN** a host uses default theme styles without the IranYekan helper
+- **THEN** the builder and renderer remain usable with the default `fontRtl` stack

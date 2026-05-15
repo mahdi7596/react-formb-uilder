@@ -38,6 +38,45 @@ export function AdminBuilder({ schema }: { schema: BuilderSchema }) {
 
 `BuilderWorkspace` renders the command bar, workflow panels, palette, canvas, inspector, drag-and-drop layer, and preview. Preview uses the real public renderer instead of duplicate builder-only field rendering.
 
+## Palette And Structured Options
+
+The builder palette includes the MVP-hardening fields currently supported by the product contracts, including text, long text, email, phone, URL, number, date, time, dropdown, radio group, checkbox group, checkbox, switch, rating, linear scale, hidden field, read-only value, and file metadata.
+
+Choice-like fields use structured option editing instead of raw `label=value` text:
+
+- labels are creator-facing and can later be localized
+- submitted values are stable backend contracts
+- options can be added, duplicated, deleted, reordered, disabled, and bulk pasted
+- default values use option submitted values rather than labels
+- dangerous option-value changes surface through command diagnostics
+
+Bulk paste accepts either one label per line or `label=value` pairs. The builder generates unique option ids and submitted values when needed.
+
+## Production Templates And Examples
+
+The Vite example under `examples/vite-react` now demonstrates production-style templates instead of a toy-only harness:
+
+- English customer intake with content blocks, structured options, consent, hidden metadata, and an ending screen.
+- Persian RTL customer intake with Iran province/city option presets. These are example-level options, not hard-coded regional data in `packages/core`.
+- Multi-step project request with sections and current-step validation.
+- Visual logic example using safe declarative conditions for visibility and requiredness.
+- Renderer-only embed mode that mounts `FormRenderer` without the builder surface.
+
+Use the example as a host integration reference for real-renderer preview parity, normalized fake backend submissions, and owner review of visible output.
+
+## Visual Validation And Logic
+
+The inspector includes field-aware validation controls for common rules. Creators can configure requiredness, text length, numeric min/max values, pattern matching, email/URL format checks, and checkbox-group min/max selections without editing raw schema JSON.
+
+The logic panel supports the first safe visual logic workflows:
+
+- show a field when AND/OR conditions match
+- hide a field when AND/OR conditions match
+- require a field only when AND/OR conditions match
+- inspect the generated condition JSON as read-only debug output
+
+Phase 16 logic writes the existing declarative condition model. Unsupported logic such as skip routing, redirects, calculations, scoring, conditional option filtering, and branching is intentionally shown as unsupported until later contracts define it.
+
 ## Command Boundary
 
 Schema edits must flow through command/store behavior. UI components should collect creator intent and call commands such as:
