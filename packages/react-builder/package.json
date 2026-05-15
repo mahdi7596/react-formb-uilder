@@ -2,7 +2,7 @@
   "name": "@your-org/forms-react-builder",
   "version": "0.0.0",
   "private": true,
-  "description": "React form builder command and editor-state package.",
+  "description": "React form builder command, editor-state, and visual builder UI package.",
   "type": "module",
   "sideEffects": false,
   "exports": {
@@ -14,8 +14,10 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "dev": "vite --host 127.0.0.1 --port 4178",
+    "e2e": "playwright test -c playwright.config.ts",
     "lint": "eslint .",
-    "test": "vitest run",
+    "test": "vitest run --config vitest.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
@@ -23,7 +25,21 @@
     "@your-org/forms-react-renderer": "workspace:*"
   },
   "peerDependencies": {
-    "react": ">=18.2.0 || >=19.0.0"
+    "react": ">=18.2.0 || >=19.0.0",
+    "react-dom": ">=18.2.0 || >=19.0.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "jsdom": "^27.2.0",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "vite": "^7.2.7",
+    "vitest-axe": "^0.1.0"
+  }
 }

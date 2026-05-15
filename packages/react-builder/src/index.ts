@@ -59,6 +59,7 @@ export type BuilderCommandName =
   | "updateCondition"
   | "updateOptions"
   | "updateFieldType"
+  | "updateNodeProperties"
   | "updateSettings";
 
 export interface BuilderCommandResult {
@@ -116,6 +117,10 @@ export interface UpdateOptionsInput extends UpdateNodeInput {
 
 export interface UpdateFieldTypeInput extends UpdateNodeInput {
   fieldType: string;
+}
+
+export interface UpdateNodePropertiesInput extends UpdateNodeInput {
+  properties: Partial<Omit<BuilderNode, "id" | "type" | "name" | "fieldType" | "validation" | "visibility" | "enabledWhen" | "options">>;
 }
 
 export interface UpdateSettingsInput {
@@ -329,6 +334,13 @@ export function updateFieldType(schema: BuilderSchema, input: UpdateFieldTypeInp
       ]
     : [];
   return updateNode(schema, "updateFieldType", input.nodeId, (node) => ({ ...node, fieldType: input.fieldType }), diagnostics);
+}
+
+export function updateNodeProperties(schema: BuilderSchema, input: UpdateNodePropertiesInput): BuilderCommandResult {
+  return updateNode(schema, "updateNodeProperties", input.nodeId, (node) => ({
+    ...node,
+    ...clone(input.properties)
+  }));
 }
 
 export function updateSettings(schema: BuilderSchema, input: UpdateSettingsInput): BuilderCommandResult {
@@ -655,3 +667,5 @@ function diagnostic(
 function hasErrors(diagnostics: BuilderCommandDiagnostic[]): boolean {
   return diagnostics.some((diagnostic) => diagnostic.severity === "error");
 }
+
+export * from "./ui.js";
